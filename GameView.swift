@@ -290,9 +290,9 @@ struct GameView: View {
         let distance = dx + dy // Manhattan Distance
 
         // Normalize intensity (closer = stronger)
-        let maxDistance = Float(maze.count)
-        let intensityValue = max(0.2, 1.0 - (Float(distance) / maxDistance))
-        let intensity = CHHapticEventParameter(parameterID: .hapticIntensity, value: intensityValue*2)
+        let maxDistance = Double(maze.count)
+        let intensityValue = max(0.1, 1.0 - (Double(distance) / maxDistance))
+        let intensity = CHHapticEventParameter(parameterID: .hapticIntensity, value: Float(intensityValue*2))
         let sharpness = CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.3)
 
         do {
