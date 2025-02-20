@@ -6,7 +6,9 @@
 //
 import SwiftUI
 
+
 struct LevelsView: View {
+    @State private var path = NavigationPath()  // Tracks navigation state
     @AppStorage("unlockedLevel") private var unlockedLevel = 1 // Persist unlocked levels
     @State private var selectedLevel: Int? = nil  // Store tapped level
     @State private var navigateToGame = false  // Controls navigation
@@ -15,27 +17,9 @@ struct LevelsView: View {
     
     let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())] // 2 columns
 
-    let levels: [([[Bool]], (row: Int, col: Int))] = [
-        ([
-            [true,  true,  false, true,  true ],
-            [false, true,  false, true,  false],
-            [true,  true,  true,  true,  true ],
-            [true, true,  false, true,  true],
-            [true,  false, true,  true,  false ]
-        ], (3, 4)),  // Level 1 (5x5 grid, goal at bottom-right)
-        
-        ([
-            [true,  false, true,  true,  true ],
-            [true,  true,  false, false, true ],
-            [false, true,  true,  true,  true ],
-            [true,  false, false, true,  false],
-            [true,  true,  true,  true,  true ]
-        ], (0, 4)),  // Level 2
-        // Add more levels here
-    ]
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ZStack {
                 Color.black.ignoresSafeArea()
                 ZStack {
@@ -56,7 +40,7 @@ struct LevelsView: View {
                         Text("No sight. No sound. Only the faint pulse of the unknown. Somewhere hidden within this maze, an exit exists but it won’t reveal itself easily.")
                             .padding(.horizontal, 10)
                             .font(.body)
-                            .fontWeight(.semibold)
+                            .fontWeight(.medium)
                             .multilineTextAlignment(.center)
                             .foregroundColor(.white)
                             .shadow(color: Color.white.opacity(1), radius: 10)
@@ -69,7 +53,7 @@ struct LevelsView: View {
                                     if level <= unlockedLevel { // Only navigate if unlocked
                                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                                         selectedLevel = level
-                                        navigateToGame = true
+                                        path.append(level)
                                     }
                                 }) {
                                     Text("\(level)")
@@ -89,15 +73,14 @@ struct LevelsView: View {
                         }
                         .padding()
                     }
-                    .navigationDestination(isPresented: $navigateToGame) {
-                        if let selectedLevel = selectedLevel, selectedLevel <= levels.count {
-                            GameView(
-                                unlockedLevel: $unlockedLevel,
-                                currentLevel: selectedLevel,
-                                maze: levels[selectedLevel - 1].0,
-                                goalPosition: levels[selectedLevel - 1].1
-                            )
-                        }
+                    .navigationDestination(for: Int.self) { level in
+                        GameView(
+                            path: $path,
+                            unlockedLevel: $unlockedLevel,
+                            currentLevel: level,
+                            maze: levels[level - 1].0,
+                            goalPosition: levels[level - 1].1
+                        )
                     }
                 }
             }

@@ -9,8 +9,9 @@ import SwiftUI
 import CoreHaptics
 
 struct GameView: View {
+    @Binding var path: NavigationPath
     @Binding var unlockedLevel: Int
-    let currentLevel: Int 
+    let currentLevel: Int
     let maze: [[Bool]] // Injected maze layout
     let goalPosition: (row: Int, col: Int) // Injected goal
     @State private var playerPosition = (row: 0, col: 0) // Start position
@@ -130,7 +131,7 @@ struct GameView: View {
                     Color.black.opacity(0.8).edgesIgnoringSafeArea(.all)
                     
                     VStack {
-                        Text("Congratulations 🎉")
+                        Text("Congratulations")
                             .font(.largeTitle)
                             .fontWeight(.bold)
                             .foregroundColor(.mint)
@@ -153,10 +154,39 @@ struct GameView: View {
                                 .background(Color.mint)
                                 .cornerRadius(12)
                         }
+                        .padding(.top, 40)
+                        
+                        if currentLevel != levels.count {
+                            Button(action: navigateToNextLevel) {
+                                Text("Next")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .frame(width: 140)
+                                    .background(Color.mint)
+                                    .cornerRadius(12)
+                            }
+                            .padding(.top, 20)
+                        }
                     }
                 }
             }
         }
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button(action: {
+                    path.removeLast(path.count) // Always go back to LevelsView
+                }) {
+                    Image(systemName: "chevron.left")
+                        .foregroundColor(.mint)
+                    Text("Back")
+                        .font(.headline)
+                        .foregroundColor(.mint)
+                }
+            }
+        }
+        .navigationBarBackButtonHidden(true)
         .onDisappear() {
             resetGame()
         }
@@ -175,6 +205,24 @@ struct GameView: View {
                 }
             }
         }
+    }
+    
+    func navigateToNextLevel() {
+        let nextLevel = currentLevel + 1
+        path.append(nextLevel)
+//        let nextLevelView = GameView(
+//            path: $path,
+//            unlockedLevel: $unlockedLevel,
+//            currentLevel: nextLevel,
+//            maze: levels[nextLevel - 1].0,
+//            goalPosition: levels[nextLevel - 1].1
+//        )
+        
+//        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+//           let rootView = windowScene.windows.first?.rootViewController {
+//            rootView.dismiss(animated: false) // Dismiss current view
+//            rootView.present(UIHostingController(rootView: nextLevelView), animated: true)
+//        }
     }
     
     func resetGame() {
@@ -285,7 +333,7 @@ struct GridView: View {
             color = Color.mint
         } else if goalPosition == (row, col) ||
                     !maze[row][col] {
-            color = Color.white.opacity(0.3)
+            color = Color.white.opacity(0.5)
         } else {
             color = Color.clear
         }
