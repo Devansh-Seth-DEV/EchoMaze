@@ -30,11 +30,13 @@ struct GameView: View {
                 .scaledToFill()
             VStack {
                 Spacer()
-                Text("Moves Left: \(movesLeft)")
+                Text("Moves: \(movesLeft)")
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
-                    .shadow(color: Color.mint.opacity(1), radius: 10)
+                    .shadow(color: Color.white.opacity(1), radius: 10)
+                    .padding(.trailing, 40) // Offset from trailing edge
+                    .frame(maxWidth: .infinity, alignment: .trailing)
 
                 
                 // 5x5 Grid
@@ -44,6 +46,7 @@ struct GameView: View {
                 
                 Text("Not all walls are what they seem, find the one that leads to freedom. As you get closer to the exit, the pulse grows stronger guiding you toward escape.")
                     .font(.subheadline)
+                    .fontWeight(.medium)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .shadow(color: Color.mint.opacity(1), radius: 10)
@@ -55,7 +58,7 @@ struct GameView: View {
                     Button(action: { movePlayer(direction: .up) }) {
                         Image(systemName: "arrow.up.circle.fill")
                             .resizable()
-                            .frame(width: 50, height: 50)
+                            .frame(width: 60, height: 60)
                             .foregroundColor(playerPosition.row == 0 ? .gray : .mint)
                     }
                     .disabled(playerPosition.row == 0)
@@ -64,7 +67,7 @@ struct GameView: View {
                         Button(action: { movePlayer(direction: .left) }) {
                             Image(systemName: "arrow.left.circle.fill")
                                 .resizable()
-                                .frame(width: 50, height: 50)
+                                .frame(width: 60, height: 60)
                                 .foregroundColor(playerPosition.col == 0 ? .gray : .mint)
                         }
                         .disabled(playerPosition.col == 0)
@@ -74,7 +77,7 @@ struct GameView: View {
                         Button(action: { movePlayer(direction: .right) }) {
                             Image(systemName: "arrow.right.circle.fill")
                                 .resizable()
-                                .frame(width: 50, height: 50)
+                                .frame(width: 60, height: 60)
                                 .foregroundColor(playerPosition.col == maze[0].count - 1 ? .gray : .mint)
                         }
                         .disabled(playerPosition.col == maze[0].count - 1)
@@ -84,7 +87,7 @@ struct GameView: View {
                     Button(action: { movePlayer(direction: .down) }) {
                         Image(systemName: "arrow.down.circle.fill")
                             .resizable()
-                            .frame(width: 50, height: 50)
+                            .frame(width: 60, height: 60)
                             .foregroundColor(playerPosition.row == maze.count - 1 ? .gray : .mint)
                     }
                     .disabled(playerPosition.row == maze.count - 1)
