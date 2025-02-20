@@ -20,9 +20,9 @@ struct LevelsView: View {
             [true,  true,  false, true,  true ],
             [false, true,  false, true,  false],
             [true,  true,  true,  true,  true ],
-            [false, true,  false, true,  false],
-            [true,  false, true,  true,  true ]
-        ], (4, 4)),  // Level 1 (5x5 grid, goal at bottom-right)
+            [true, true,  false, true,  true],
+            [true,  false, true,  true,  false ]
+        ], (3, 4)),  // Level 1 (5x5 grid, goal at bottom-right)
         
         ([
             [true,  false, true,  true,  true ],
@@ -53,9 +53,10 @@ struct LevelsView: View {
                             .shadow(color: Color.white.opacity(0.8), radius: 10)
                             .padding(.top, 50)
                         
-                        Text("You wake up in complete darkness. No sight. No sound. Only the faint pulse of the unknown.\nThe walls are invisible, but you can feel them.\nThe exit is hidden, but your instincts will guide you.")
-                            .padding(.horizontal, 5)
+                        Text("No sight. No sound. Only the faint pulse of the unknown. Somewhere hidden within this maze, an exit exists but it won’t reveal itself easily.")
+                            .padding(.horizontal, 10)
                             .font(.body)
+                            .fontWeight(.semibold)
                             .multilineTextAlignment(.center)
                             .foregroundColor(.white)
                             .shadow(color: Color.white.opacity(1), radius: 10)
