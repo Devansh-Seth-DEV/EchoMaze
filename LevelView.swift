@@ -11,7 +11,9 @@ struct LevelsView: View {
     @State private var selectedLevel: Int? = nil  // Store tapped level
     @State private var navigateToGame = false  // Controls navigation
     
-    let columns = [GridItem(.flexible()), GridItem(.flexible())] // 2 columns
+    private let MAX_LEVELS = 9
+    
+    let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())] // 2 columns
 
     let levels: [([[Bool]], (row: Int, col: Int))] = [
         ([
@@ -57,10 +59,11 @@ struct LevelsView: View {
                             .multilineTextAlignment(.center)
                             .foregroundColor(.white)
                             .shadow(color: Color.white.opacity(1), radius: 10)
+                            .padding(.bottom, 20)
 
                         
                         LazyVGrid(columns: columns, spacing: 20) {
-                            ForEach(1...6, id: \.self) { level in
+                            ForEach(1...MAX_LEVELS, id: \.self) { level in
                                 Button(action: {
                                     if level <= unlockedLevel { // Only navigate if unlocked
                                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -72,7 +75,7 @@ struct LevelsView: View {
                                         .font(.largeTitle)
                                         .fontWeight(.bold)
                                         .foregroundColor(level <= unlockedLevel ? .mint : .gray)
-                                        .frame(width: 100, height: 100)
+                                        .frame(width:  100, height: 100)
                                         .background(RoundedRectangle(cornerRadius: 15).fill(Color.black))
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 15)
