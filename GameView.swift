@@ -1,10 +1,3 @@
-//
-//  GameView.swift
-//  EchoMaze
-//
-//  Created by Devansh Seth on 20/02/25.
-//
-
 import SwiftUI
 import CoreHaptics
 
@@ -14,47 +7,52 @@ struct GameView: View {
     let currentLevel: Int
     let maze: [[Bool]] // Injected maze layout
     let goalPosition: (row: Int, col: Int) // Injected goal
+    let fakeGoalPosition: (row: Int, col: Int) // Injected fake goal
     @State private var playerPosition = (row: 0, col: 0) // Start position
-    @Environment(\.presentationMode) var presentationMode // To go back
     @State private var movesLeft: Int = -999
     @State private var showGameOver = false
     @State private var showLevelComplete = false
-    private let MIN_MOVES: Int = 12
+    @State private var showTooltip: Bool = false
+    @State private var MIN_MOVES: Int = 15
     @State private var hapticEngine: CHHapticEngine?
-
+    @State private var playerHitWall: Bool = false
 
     var body: some View {
         ZStack {
+            Color.black.ignoresSafeArea()
             Image("LandingTheme")
                 .resizable()
                 .ignoresSafeArea()
                 .scaledToFill()
             VStack {
-                Spacer()
-                Text("Moves: \(movesLeft)")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .shadow(color: Color.white.opacity(1), radius: 10)
-                    .padding(.trailing, 40) // Offset from trailing edge
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-
+                HStack {
+                    Text("Moves: \(movesLeft)")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .shadow(color: Color.white.opacity(1), radius: 10)
+                        .padding(.leading, 10) // Offset from trailing edge
+                        .frame(maxWidth: 200, alignment: .leading)
+                    
+                    Button(action: {
+                        showTooltip = true
+                    }) {
+                        Image(systemName: "lightbulb.min")
+                            .resizable()
+                            .foregroundColor(.mint)
+                            .shadow(color: Color.mint.opacity(1), radius: 10)
+                            .shadow(color: Color.mint.opacity(1), radius: 10)
+                            .frame(width: 30, height: 35)
+                        
+                    }
+                    .padding(.leading, 70)
+                }
                 
-                // 5x5 Grid
-                GridView(maze: maze, playerPosition: playerPosition, goalPosition: goalPosition)
-                    .padding(.top, 10)
+                //MARK: Maze Init
+                GridView(maze: maze, playerPosition: playerPosition, goalPosition: goalPosition, playerHitWall: playerHitWall)
                     .padding(.bottom, 10)
                 
-                Text("Not all walls are what they seem, find the one that leads to freedom. As you get closer to the exit, the pulse grows stronger guiding you toward escape.")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .shadow(color: Color.mint.opacity(1), radius: 10)
-                    .padding(.bottom, 5)
-                    .padding(.horizontal, 10)
-                
-                // Arrow Controls
+                //MARK: Arrow Controlls
                 VStack {
                     Button(action: { movePlayer(direction: .up) }) {
                         Image(systemName: "arrow.up.circle.fill")
@@ -93,7 +91,133 @@ struct GameView: View {
                     }
                     .disabled(playerPosition.row == maze.count - 1)
                 }
-                .padding(.bottom, 40)
+                .padding(.bottom, 20)
+            }
+            
+            if showTooltip {
+                ZStack {
+                    Color.black.opacity(0.9).edgesIgnoringSafeArea(.all)
+                    
+                    VStack(alignment: .center, spacing: 20) {
+                        Text("Quick Guide")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(.mint)
+                            .shadow(color: Color.mint.opacity(1), radius: 10)
+                        
+                        HStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(.mint)
+                                .frame(width: 45, height: 46)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                )
+                                .padding(.leading, 20)
+                                .padding(.trailing, 20)
+                            
+                            Text("This is **Echo**, Move it to find the escape.")
+                                .font(.title3)
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.leading)
+                                .shadow(color: Color.mint.opacity(1), radius: 10)
+                                .frame(maxWidth: 300, alignment: .leading)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 20)
+
+                        HStack(alignment: .center, spacing: 10) {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(.white.opacity(0.3))
+                                .frame(width: 45, height: 46)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                )
+                                .padding(.leading, 20)
+                                .padding(.trailing, 20)
+                            
+                            Text("This is **Echoing Blockade** The **Echo** reflects back, signaling a blocked path.")
+                                .font(.title3)
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.leading)
+                                .shadow(color: Color.mint.opacity(1), radius: 10)
+                                .frame(maxWidth: 300, alignment: .leading)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 20)
+                        
+                        HStack(alignment: .center, spacing: 10) {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(.clear)
+                                .frame(width: 45, height: 46)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                )
+                                .padding(.leading, 20)
+                                .padding(.trailing, 20)
+                            
+                            Text("This is an **Open Path** You can move freely here.")
+                                .font(.title3)
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.leading)
+                                .shadow(color: Color.mint.opacity(1), radius: 10)
+                                .frame(maxWidth: 300, alignment: .leading)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 20)
+                        
+                        HStack(alignment: .center, spacing: 10) {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(.white.opacity(0.3))
+                                .frame(width: 45, height: 46)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                )
+                                .padding(.leading, 20)
+                                .padding(.trailing, 20)
+                            
+                            Text("This is **Echo Point** It looks like **Echoing Blockade** but it's an unseen path calling the **Echo**.")
+                                .font(.title3)
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.leading)
+                                .shadow(color: Color.mint.opacity(1), radius: 10)
+                                .frame(maxWidth: 300, alignment: .leading)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 20)
+                        
+                        Text("The **Echo Point** wispers the strong echo as you get closer to it, listen the echo (vibrations).\nDon't get tricked by **Fake Echo Point** trying to mislead you. It wispers the echo twice when infront of you.")
+                            .font(.headline)
+                            .foregroundColor(.mint)
+                            .multilineTextAlignment(.leading)
+                            .shadow(color: Color.mint.opacity(1), radius: 10)
+                            .padding(.horizontal, 40)
+//                            .padding(.top, 10)
+                        
+                        Text("Find the hidden **Echo Point** to escape")
+                            .font(.headline)
+                            .foregroundColor(.mint)
+                            .multilineTextAlignment(.center)
+                            .shadow(color: Color.mint.opacity(1), radius: 10)
+                            .padding(.horizontal, 40)
+                        
+                        Button(action: { showTooltip = false }) {
+                            Text("Got It!")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .padding()
+                                .frame(width: 140)
+                                .background(Color.mint)
+                                .cornerRadius(12)
+                                .padding(.top, 10)
+                        }
+                        .padding(.bottom, 20)
+                    }
+                }
             }
             
             if showGameOver {
@@ -124,9 +248,7 @@ struct GameView: View {
                         }
                     }
                 }
-            }
-            
-            if showLevelComplete {
+            } else if showLevelComplete {
                 ZStack {
                     Color.black.opacity(0.8).edgesIgnoringSafeArea(.all)
                     
@@ -154,7 +276,6 @@ struct GameView: View {
                                 .background(Color.mint)
                                 .cornerRadius(12)
                         }
-                        .padding(.top, 40)
                         
                         if currentLevel != levels.count {
                             Button(action: navigateToNextLevel) {
@@ -167,7 +288,7 @@ struct GameView: View {
                                     .background(Color.mint)
                                     .cornerRadius(12)
                             }
-                            .padding(.top, 20)
+                            .padding(.top, 10)
                         }
                     }
                 }
@@ -180,9 +301,11 @@ struct GameView: View {
                 }) {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.mint)
+                        .shadow(color: Color.mint.opacity(1), radius: 10)
                     Text("Back")
                         .font(.headline)
                         .foregroundColor(.mint)
+                        .shadow(color: Color.white.opacity(1), radius: 10)
                 }
             }
         }
@@ -191,6 +314,7 @@ struct GameView: View {
             resetGame()
         }
         .onAppear() {
+            MIN_MOVES = maze.count * 3
             if movesLeft == -999 {
                 movesLeft = abs(goalPosition.0) + abs(goalPosition.1)
                 movesLeft = max(movesLeft<<1, MIN_MOVES)
@@ -210,19 +334,6 @@ struct GameView: View {
     func navigateToNextLevel() {
         let nextLevel = currentLevel + 1
         path.append(nextLevel)
-//        let nextLevelView = GameView(
-//            path: $path,
-//            unlockedLevel: $unlockedLevel,
-//            currentLevel: nextLevel,
-//            maze: levels[nextLevel - 1].0,
-//            goalPosition: levels[nextLevel - 1].1
-//        )
-        
-//        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-//           let rootView = windowScene.windows.first?.rootViewController {
-//            rootView.dismiss(animated: false) // Dismiss current view
-//            rootView.present(UIHostingController(rootView: nextLevelView), animated: true)
-//        }
     }
     
     func resetGame() {
@@ -249,26 +360,33 @@ struct GameView: View {
         
         switch direction {
         case .up where row > 0: newRow -= 1
-        case .down where row < 4: newRow += 1
+        case .down where row < maze.count: newRow += 1
         case .left where col > 0: newCol -= 1
-        case .right where col < 4: newCol += 1
+        case .right where col < maze[row].count: newCol += 1
         default: break
         }
         
         if (newRow, newCol) == playerPosition { return } 
+        
         if canMove(to: (newRow, newCol)) {
             playerPosition = (newRow, newCol)
-            movesLeft -= 1
             triggerHapticFeedback() // Call vibration feedback
-            
-            if movesLeft == 0 && playerPosition != goalPosition {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    showGameOver = true
-                }
-            }
         } else {
+            playerHitWall = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                playerHitWall = false
+            }
             UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
         }
+        
+        movesLeft = max(0, movesLeft-1)
+        if movesLeft == 0 && playerPosition != goalPosition {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                UINotificationFeedbackGenerator().notificationOccurred(.warning)
+                showGameOver = true
+            }
+        }
+
         
         // **Goal Check - Strongest Vibration**
         if playerPosition == goalPosition {
@@ -287,8 +405,19 @@ struct GameView: View {
 
         let dx = abs(playerPosition.0 - goalPosition.0)
         let dy = abs(playerPosition.1 - goalPosition.1)
-        let distance = dx + dy // Manhattan Distance
-
+        let goalDistance = dx + dy // Manhattan Distance
+        
+        let fakeGoalDistance: Int
+        if fakeGoalPosition.0 != -1 && fakeGoalPosition.1 != -1 {
+            let dfx = abs(playerPosition.0 - fakeGoalPosition.0)
+            let dfy = abs(playerPosition.1 - fakeGoalPosition.1)
+            fakeGoalDistance = dfx + dfy
+        } else {
+            fakeGoalDistance = goalDistance+1
+        }
+        
+        let distance = min(goalDistance, fakeGoalDistance)
+        
         // Normalize intensity (closer = stronger)
         let maxDistance = Double(maze.count)
         let intensityValue = max(0.1, 1.0 - (Double(distance) / maxDistance))
@@ -304,8 +433,25 @@ struct GameView: View {
                                       relativeTime: 0,
                                       duration: 15.0
             )
+            var events = [event]
+            if distance == fakeGoalDistance && fakeGoalPosition.0 != -1 && fakeGoalPosition.1 != -1 &&
+                distance <= 1
+            {
+                events.removeAll()
+                for i in 0..<2 {
+                    events.append(
+                        CHHapticEvent(eventType: .hapticTransient,
+                                      parameters: [
+                                        intensity,
+                                        sharpness
+                                      ],
+                                      relativeTime: Double(i)*0.1,
+                                      duration: 1.0
+                                     ))
+                }
+            }
 
-            let pattern = try CHHapticPattern(events: [event], parameters: [])
+            let pattern = try CHHapticPattern(events: events, parameters: [])
             let player = try engine.makePlayer(with: pattern)
             try player.start(atTime: CHHapticTimeImmediate)
         } catch {
@@ -326,11 +472,14 @@ struct GridView: View {
     let maze: [[Bool]]
     let playerPosition: (row: Int, col: Int)
     let goalPosition: (row: Int, col: Int)
+    let playerHitWall: Bool
+    private let interMazeSpacing: CGFloat = 10
+    @State var cellSize: CGFloat = 0
     
     func getCellColor(_ row: Int, _ col: Int) -> Color {
         let color: Color
         if playerPosition == (row, col) {
-            color = Color.mint
+            color = playerHitWall ? Color.red.opacity(0.4) : Color.mint
         } else if goalPosition == (row, col) ||
                     !maze[row][col] {
             color = Color.white.opacity(0.5)
@@ -340,14 +489,33 @@ struct GridView: View {
         return color
     }
     
+    func computeCellSizeAndSpacing(_ size: CGSize) -> (CGFloat, CGFloat){
+        let totalWidth = size.width - 20
+        let totalHeight = size.height - 20
+        
+        let rows = CGFloat(maze.count)
+        let cols = CGFloat(maze[0].count)
+        // If cell size is too small, reduce spacing
+//        let interMazeSpacing = max(5, min(10, totalWidth / (cols * 5)))
+        let interMazeSpacing = max(5, min(10, min(totalWidth / (cols * 5), totalHeight / (rows * 5))))
+
+
+        let availableWidth = totalWidth - ((cols - 1) * interMazeSpacing)
+        let availableHeight = totalHeight - ((rows - 1) * interMazeSpacing)
+        
+        let cellSize = min(availableWidth / cols, availableHeight / rows)
+        
+        return (cellSize, interMazeSpacing)
+    }
+    
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(alignment: .center) {
             ForEach(0..<maze.count, id: \.self) { row in
-                HStack(spacing: 10) {
+                HStack(alignment: .center) {
                     ForEach(0..<maze[row].count, id: \.self) { col in
                         RoundedRectangle(cornerRadius: 8)
                             .fill(getCellColor(row, col))
-                            .frame(width: 60, height: 60)
+                            .frame(width: cellSize, height: cellSize)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
                                     .stroke(Color.white.opacity(0.3), lineWidth: 1)
@@ -355,6 +523,10 @@ struct GridView: View {
                     }
                 }
             }
+        }
+        .onAppear() {
+            let sizeOffset = max(maze.count, maze[0].count)
+            cellSize = CGFloat(80 - (sizeOffset * 5))
         }
     }
 }

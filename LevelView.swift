@@ -1,9 +1,3 @@
-//
-//  LevelViews.swift
-//  EchoMaze
-//
-//  Created by Devansh Seth on 20/02/25.
-//
 import SwiftUI
 
 
@@ -30,21 +24,21 @@ struct LevelsView: View {
                     
                     VStack {
                         Text("Find Your Way Forward")
-                            .padding(.bottom, 10)
                             .font(.title)
                             .fontWeight(.bold)
                             .foregroundColor(.mint)
-                            .shadow(color: Color.white.opacity(0.8), radius: 10)
-                            .padding(.top, 50)
+                            .shadow(color: Color.mint.opacity(1), radius: 10)
+                            .padding(.top, 100)
                         
-                        Text("No sight. No sound. Only the faint pulse of the unknown. Somewhere hidden within this maze, an exit exists but it won’t reveal itself easily.")
-                            .padding(.horizontal, 10)
-                            .font(.body)
+                        Text("Trapped in a maze of silence, you are **Echo**. Walls block your way, but the **Echo Point** whispers through vibrations.")
+                            .padding(.horizontal, 20)
+                            .font(.title3)
                             .fontWeight(.medium)
                             .multilineTextAlignment(.center)
                             .foregroundColor(.white)
                             .shadow(color: Color.white.opacity(1), radius: 10)
                             .padding(.bottom, 20)
+                            .frame(maxWidth: .infinity, alignment: .center)
 
                         
                         LazyVGrid(columns: columns, spacing: 20) {
@@ -61,7 +55,7 @@ struct LevelsView: View {
                                         .fontWeight(.bold)
                                         .foregroundColor(level <= unlockedLevel ? .mint : .gray)
                                         .frame(width:  100, height: 100)
-                                        .background(RoundedRectangle(cornerRadius: 15).fill(Color.black))
+                                        .background(RoundedRectangle(cornerRadius: 15).fill(Color.black.opacity(0.77)))
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 15)
                                                 .stroke(level <= unlockedLevel ? Color.mint : Color.gray, lineWidth: 3)
@@ -74,13 +68,16 @@ struct LevelsView: View {
                         .padding()
                     }
                     .navigationDestination(for: Int.self) { level in
-                        GameView(
-                            path: $path,
-                            unlockedLevel: $unlockedLevel,
-                            currentLevel: level,
-                            maze: levels[level - 1].0,
-                            goalPosition: levels[level - 1].1
-                        )
+                        if level <= levels.count {
+                            GameView(
+                                path: $path,
+                                unlockedLevel: $unlockedLevel,
+                                currentLevel: level,
+                                maze: levels[level - 1].0,
+                                goalPosition: levels[level - 1].1,
+                                fakeGoalPosition: levels[level - 1].2
+                            )
+                        }
                     }
                 }
             }
