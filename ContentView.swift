@@ -5,6 +5,7 @@ struct ContentView: View {
     @State private var canBeginLaunchAnimation
     = false
     @State private var navigateToLevels = false
+    @AppStorage("showTutorial") private var showTutorial: Bool = true
     
     var body: some View {
         NavigationStack {
@@ -13,6 +14,7 @@ struct ContentView: View {
                     LevelsView()
                         .transition(.opacity)
                 } else {
+                    Color.black.ignoresSafeArea()
                     Image("LandingTheme")
                         .resizable()
                         .ignoresSafeArea()
@@ -75,9 +77,5 @@ struct ContentView: View {
         .onAppear {
             canBeginLaunchAnimation = true
         }
-    }
-    
-    func startGame() {
-        print("Game started")
     }
 }

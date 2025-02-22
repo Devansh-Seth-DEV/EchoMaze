@@ -110,7 +110,7 @@ struct GameView: View {
             
             if showTooltip {
                 ZStack {
-                    Color.black.opacity(0.9).edgesIgnoringSafeArea(.all)
+                    Color.black.opacity(0.9).ignoresSafeArea()
                     
                     VStack(alignment: .center, spacing: 20) {
                         Text("Quick Guide")
@@ -456,7 +456,7 @@ struct GameView: View {
             
             if showGameOver {
                 ZStack {
-                    Color.black.opacity(0.8).edgesIgnoringSafeArea(.all)
+                    Color.black.opacity(0.8).ignoresSafeArea()
                     
                     VStack {
                         Text("Game Over")
@@ -484,7 +484,7 @@ struct GameView: View {
                 }
             } else if showLevelComplete {
                 ZStack {
-                    Color.black.opacity(0.8).edgesIgnoringSafeArea(.all)
+                    Color.black.opacity(0.8).ignoresSafeArea()
                     
                     VStack {
                         Text("Congratulations")

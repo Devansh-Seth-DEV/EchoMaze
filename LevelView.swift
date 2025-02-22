@@ -9,7 +9,7 @@ struct LevelsView: View {
     
     private let MAX_LEVELS = 9
     
-    let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())] // 2 columns
+    let columns = Array<GridItem>(repeating: GridItem(.flexible()), count: 3)
 
 
     var body: some View {
