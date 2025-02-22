@@ -636,16 +636,17 @@ struct GameView: View {
                             .foregroundColor(.white)
                             .padding(.bottom, 50)
                         
-                        Button(action: resetGame) {
-                            Text("Try Again")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                                .padding()
-                                .frame(width: 140)
-                                .background(Color.red)
-                                .cornerRadius(12)
-                        }
+                        Image(systemName: "arrow.clockwise")
+                            .padding(.top, 50)
+                            .padding(.bottom, 40)
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .shadow(color: Color.mint, radius: 10)
+                            .foregroundColor(.white)
+
+                            .onTapGesture {
+                                resetGame()
+                            }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 }
@@ -707,19 +708,17 @@ struct GameView: View {
                         }
                         
                         if starCount < 3 {
-                            Button(action: resetGame) {
-                                Image(systemName: "arrow.clockwise")
-                                //                            Text("Retry")
-                                    .font(.largeTitle)
-                                    .fontWeight(.bold)
-                                    .shadow(color: Color.mint, radius: 10)
-                                    .foregroundColor(.white)
-                                    .padding(.top, 50)
-                                    .padding(.bottom, 40)
-                                    .frame(width: 140)
-                                //                                .background(Color.mint)
-                                //                                .cornerRadius(12)
-                            }
+                            Image(systemName: "arrow.clockwise")
+                                .padding(.top, 50)
+                                .padding(.bottom, 40)
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                                .shadow(color: Color.mint, radius: 10)
+                                .foregroundColor(.white)
+
+                                .onTapGesture {
+                                    resetGame()
+                                }
                         }
                     }
                 }
