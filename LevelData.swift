@@ -3,16 +3,16 @@ let levels: [(
     (row: Int, col: Int),   // Goal Position
     (row: Int, col: Int)    // Fake Echo Position (-1, -1 if none)
 )] = [
-    // Level 1 (5x5) - No Fake Echo (Introduction)
+    // Level 1 (5x5)
     ([
-        [true,  false,  true,    true,  true],
+        [true,  true,  true,    true,  true],
         [true,  true,   true,    false,  true],
         [true, true,   true,    false,  true],
         [true,  false,  true,    true,  true],
         [true,  false,  true,    true,  false]//
     ], (1, 4), (-1, -1)),
     
-    // Level 2 (5x5) - No Fake Echo
+    // Level 2 (5x5)
     ([
         [true,  false,  true,    true,  true],
         [true,  true,   true,    false, true],
@@ -21,7 +21,7 @@ let levels: [(
         [true,  false,  true,    true,  true]//
     ], (4, 4), (-1, -1)),
 
-    // Level 3 (5x5) - No Fake Echo
+    // Level 3 (5x5)
     ([
         [true,  true,  false, true,  false],
         [false, true,  true,  false, true ],
@@ -30,7 +30,7 @@ let levels: [(
         [false, true,  true,  true,  false]
     ], (3, 4), (-1, -1)),
 
-    // Level 4 (5x5) - No Fake Echo (Fixed)
+    // Level 4 (5x5)
     ([
         [true,  false, true,  true,  true ],
         [true,  true,  true, true,  false],
@@ -39,7 +39,7 @@ let levels: [(
         [true,  true,  true,  true,  true ]
     ], (0, 4), (-1, -1)),
 
-    // Level 5 (6x6) - No Fake Echo
+    // Level 5 (6x6)
     ([
         [true,  true,  true, true,  false, false ],
         [false, true,  true,  false, true,  true ],
@@ -49,7 +49,7 @@ let levels: [(
         [false,  true, true,  true,  true,  true ]
     ], (1, 5), (-1, -1)),
 
-    // Level 6 (6x6) - No Fake Echo
+    // Level 6 (6x6)
     ([
         [true,  false, true,  true,  false, true ],
         [true,  true,  false, true,  true,  true ],
@@ -59,7 +59,7 @@ let levels: [(
         [true,  false, true,  true,  true,  true ]
     ], (4, 3), (-1, -1)),
 
-    // Level 7 (6x6) - Fake Echo Introduction
+    // Level 7 (6x6)
     ([
         [true,  false, true,  true,  false, true ],
         [true,  true,  false, true,  true,  true ],
@@ -69,7 +69,7 @@ let levels: [(
         [true,  false, true,  true,  true,  true ]
     ], (5, 5), (2, 4)),
 
-    // Level 8 (7x7) - With Fake Echo
+    // Level 8 (7x7)
     ([
         [true,  true,  true, false,  true, true,  true ],
         [false, true,  true,  true, false,  true, false],
@@ -80,7 +80,7 @@ let levels: [(
         [true,  true,  true,  true,  false, true,  true ]
     ], (0, 4), (3, 3)),
 
-    // Level 9 (7x7) - With Fake Echo
+    // Level 9 (7x7)
     ([
         [true,  true,  false, true,  false, true,  true ],
         [false, true,  true,  false, true,  false, true ],

@@ -75,7 +75,6 @@ struct ContentView: View {
             }
             .onTapGesture {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                
                 withAnimation(.easeIn(duration: 0.5)) {
                     if !showTutorial {
                         navigateToLevels = true
@@ -85,9 +84,37 @@ struct ContentView: View {
                 }
             }
             .onAppear {
+                let unlockedLevel = UserDefaults.standard.integer(forKey: "unlockedLevel")
+                if unlockedLevel == 1 {
+                    let storedEchoCharge = UserDefaults.standard.string(forKey: "storeEchoCharges") ?? "[]"
+                    var echoChargeArray = Array<EchoChargeScore>(repeating: .init(chargeScore: 0, starCount: 0), count: levels.count)
+                    if storedEchoCharge != "[]" {
+                        for (index, echoCharge) in getEchoCharges().enumerated() {
+                            echoChargeArray[index] = echoCharge
+                        }
+                    }
+                    
+                    updateEchoCharges(echoChargeArray)
+                }
                 canBeginLaunchAnimation = true
             }
         }
 
+    }
+    
+    func getEchoCharges() -> [EchoChargeScore] {
+        let storedEchoCharges = UserDefaults.standard.string(forKey: "storeEchoCharges") ?? "[]"
+        if let data = storedEchoCharges.data(using: .utf8),
+           let decoded = try? JSONDecoder().decode([EchoChargeScore].self, from: data) {
+            return decoded
+        }
+        return []
+    }
+    
+    func updateEchoCharges(_ charges: [EchoChargeScore]) {
+        if let encoded = try? JSONEncoder().encode(charges),
+           let jsonString = String(data: encoded, encoding: .utf8) {
+            UserDefaults.standard.set(jsonString, forKey: "storeEchoCharges")
+        }
     }
 }

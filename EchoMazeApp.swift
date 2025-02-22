@@ -21,4 +21,19 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
         return AppDelegate.orientationLock
     }
+    
+    func applicationWillTerminate(_ application: UIApplication) {
+//        resetSandboxData()
+    }
+    
+    func resetSandboxData() {
+        [
+            "unlockedLevel",
+            "storeEchoCharges",
+            "showTutorial",
+            
+        ].forEach { object in
+            UserDefaults.standard.removeObject(forKey: object)
+        }
+    }
 }

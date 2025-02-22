@@ -24,14 +24,15 @@ struct GameView: View {
     @State private var MIN_MOVES_TO_GIVE: Int = 15
     @State private var hapticEngine: CHHapticEngine?
     @State private var playerHitWall: Bool = false
+    @State private var level1Counter: Int? = nil
 
     @State private var canShowQuickGuideTipOnLevel1: Bool? = false
     @State private var canShowEchoPointTipOnLevel1: Bool? = false
     @State private var canShowEchoPointFindTipOnLevel1: Bool? = false
     @State private var canShowWallHitTipOnLevel1: Bool? = false
     @State private var canShowMovesLeftTipOnLevel1: Bool? = false
-    @State private var canShowFakeEchoPointTipOnLevel6: Bool? = false
-    @State private var canShowFakeEchoPointSpotTipOnLevel6: Bool? = false
+    @State private var canShowFakeEchoPointTipOnLevel7: Bool? = false
+    @State private var canShowFakeEchoPointSpotTipOnLevel7: Bool? = false
     @State private var popupOpacity = 0.0
     @State private var tipIsShowing: Bool = false
     @State private var canDissapearTip: Bool = false
@@ -62,7 +63,7 @@ struct GameView: View {
         if starCount == 3 {
             return Text("That was a fantastic win.\nYou really brought your **A-game**!")
         } else if starCount == 2 {
-            return Text("Nice job on the win! That was impressive!")
+            return Text("Nice job on the win!\nThat was impressive!")
         } else {
             return Text("Great job! You did it!")
         }
@@ -90,6 +91,8 @@ struct GameView: View {
         self._totalMoves = .init(initialValue: minMovesToGive)
         self._movesLeft = .init(initialValue: minMovesToGive)
         self._currentScore = .init(initialValue: totalTargetScore)
+        
+        self._level1Counter = .init(initialValue: currentLevel != 1 ? nil : minMovesToGive)
     }
     
     private var starCount: Int {
@@ -115,6 +118,7 @@ struct GameView: View {
             VStack {
                 //MARK: GUIDE BULB
                 Button(action: {
+                    hideTip()
                     showTooltip = true
                 }) {
                     Image(systemName: "lightbulb.min")
@@ -229,7 +233,7 @@ struct GameView: View {
                 
                 //MARK: Arrow Controlls
                 VStack {
-                    Button(action: { movePlayer(direction: .up) }) {
+                    Button(action: {movePlayer(direction: .up) }) {
                         Image(systemName: "arrow.up.circle.fill")
                             .resizable()
                             .frame(width: 60, height: 60)
@@ -459,7 +463,7 @@ struct GameView: View {
                 }
             } else if canShowEchoPointFindTipOnLevel1 ?? false {
                 VStack {
-                    Text("**TUTORIAL**\n\nTo open the gate for the next level, You'll have to deactivate the **Echo Point** by hitting it.\n\nTip: Not all walls are truly walls, one of them is the hidden Echo Point.")
+                    Text("**TUTORIAL**\n\nTo open the gate for the next level, You'll have to deactivate the **Echo Point** by hitting it using the **Arrow Keys**.\n\nTip: Not all walls are truly walls, one of them is the hidden Echo Point.")
                         .font(.body)
                         .padding()
                         .background(Color.black.opacity(0.4))
@@ -554,7 +558,7 @@ struct GameView: View {
                 .onTapGesture {
                     hideTip()
                 }
-            } else if canShowFakeEchoPointTipOnLevel6 ?? false {
+            } else if canShowFakeEchoPointTipOnLevel7 ?? false {
                 VStack {
                     Text("Don't be tricked by **Fake Echo Point** they try to mislead you.")
                         .font(.body)
@@ -584,7 +588,7 @@ struct GameView: View {
                 .onTapGesture {
                     hideTip()
                 }
-            } else if canShowFakeEchoPointSpotTipOnLevel6 ?? false {
+            } else if canShowFakeEchoPointSpotTipOnLevel7 ?? false {
                 VStack {
                     Text("To **Spot** them, feel double vibrations, they whisper the echo twice when they're one block ahead of you.")
                         .font(.body)
@@ -651,6 +655,29 @@ struct GameView: View {
                     Color.black.opacity(0.8).ignoresSafeArea()
                     
                     VStack {
+                        HStack {
+                            ForEach(0..<3, id: \.self) { index in
+                                Image(systemName: starImage[index])
+                                    .font(.largeTitle)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(
+                                        starCount > index ? Color.mint : .white
+                                    )
+                                    .shadow(color: Color.mint.opacity(1), radius: 2)
+                                    .shadow(color: Color.white.opacity(1), radius: starGlowRadius[index])
+                                    .padding(.bottom, index == 1 ? 30 : 0)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.bottom, 10)
+                        
+                        Text("\(currentScore)")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(.mint)
+                            .shadow(color: Color.mint.opacity(1), radius: 10)
+                            .padding(.bottom, 30)
+                        
                         Text("Congratulations")
                             .font(.largeTitle)
                             .fontWeight(.bold)
@@ -665,17 +692,6 @@ struct GameView: View {
                             .shadow(color: Color.mint.opacity(1), radius: 10)
                             .padding(.bottom, 20)
                         
-                        Button(action: resetGame) {
-                            Text("Retry")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                                .padding()
-                                .frame(width: 140)
-                                .background(Color.mint)
-                                .cornerRadius(12)
-                        }
-                        
                         if currentLevel != levels.count {
                             Button(action: navigateToNextLevel) {
                                 Text("Next")
@@ -688,6 +704,22 @@ struct GameView: View {
                                     .cornerRadius(12)
                             }
                             .padding(.top, 10)
+                        }
+                        
+                        if starCount < 3 {
+                            Button(action: resetGame) {
+                                Image(systemName: "arrow.clockwise")
+                                //                            Text("Retry")
+                                    .font(.largeTitle)
+                                    .fontWeight(.bold)
+                                    .shadow(color: Color.mint, radius: 10)
+                                    .foregroundColor(.white)
+                                    .padding(.top, 50)
+                                    .padding(.bottom, 40)
+                                    .frame(width: 140)
+                                //                                .background(Color.mint)
+                                //                                .cornerRadius(12)
+                            }
                         }
                     }
                 }
@@ -716,7 +748,8 @@ struct GameView: View {
             hideTip()
         }
         .onAppear() {
-            if CHHapticEngine.capabilitiesForHardware().supportsHaptics {
+            if CHHapticEngine.capabilitiesForHardware()
+                .supportsHaptics {
                 do {
                     hapticEngine = try CHHapticEngine()
                     try hapticEngine?.start()
@@ -730,9 +763,9 @@ struct GameView: View {
                     canShowEchoPointFindTipOnLevel1 = true
                     showTip()
                 }
-            } else if currentLevel == 6 && canShowFakeEchoPointTipOnLevel6 != nil {
+            } else if currentLevel == 7 && canShowFakeEchoPointTipOnLevel7 != nil {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    canShowFakeEchoPointTipOnLevel6 = true
+                    canShowFakeEchoPointTipOnLevel7 = true
                     showTip()
                 }
             }
@@ -769,10 +802,10 @@ struct GameView: View {
                     canShowWallHitTipOnLevel1 = nil
                 } else if canShowMovesLeftTipOnLevel1 ?? false {
                     canShowMovesLeftTipOnLevel1 = nil
-                } else if canShowFakeEchoPointTipOnLevel6 ?? false {
-                    canShowFakeEchoPointTipOnLevel6 = nil
-                } else if canShowFakeEchoPointSpotTipOnLevel6 ?? false {
-                    canShowFakeEchoPointSpotTipOnLevel6 = nil
+                } else if canShowFakeEchoPointTipOnLevel7 ?? false {
+                    canShowFakeEchoPointTipOnLevel7 = nil
+                } else if canShowFakeEchoPointSpotTipOnLevel7 ?? false {
+                    canShowFakeEchoPointSpotTipOnLevel7 = nil
                 }
             }
         }
@@ -859,17 +892,21 @@ struct GameView: View {
         }
         
         movesLeft = max(0, movesLeft-1)
-        if canShowMovesLeftTipOnLevel1 == nil {
-            movesLeft = MIN_MOVES_TO_GIVE
-        }
         
         if currentLevel == 1 {
-            if movesLeft == MIN_MOVES_TO_GIVE-2 && canShowMovesLeftTipOnLevel1 != nil {
+            if movesLeft == totalMoves-1 && canShowMovesLeftTipOnLevel1 != nil {
                 canShowMovesLeftTipOnLevel1 = true
                 showTip()
-            } else if movesLeft == 4 && canShowQuickGuideTipOnLevel1 != nil {
-                canShowQuickGuideTipOnLevel1 = true
-                showTip()
+            }
+            
+            if canShowMovesLeftTipOnLevel1 == nil {
+                level1Counter = max(0, level1Counter!-1)
+                movesLeft = totalMoves
+                
+                if level1Counter! == 4 {
+                    canShowQuickGuideTipOnLevel1 = true
+                    showTip()
+                }
             }
         }
         
@@ -899,20 +936,20 @@ struct GameView: View {
             }
             showLevelComplete = true
             
-            var echoCharges: [Int] = getEchoCharges()
+            var echoCharges: [EchoChargeScore] = getEchoCharges()
             if echoCharges.count == 0 {
-                echoCharges.append(0)
+                echoCharges.append(EchoChargeScore(chargeScore: 0, starCount: 0))
                 updateEchoCharges(echoCharges)
             }
             
-            if currentScore > echoCharges[currentLevel-1] {
-                echoCharges[currentLevel-1] = currentScore
+            if currentScore > echoCharges[currentLevel-1].chargeScore {
+                echoCharges[currentLevel-1] = .init(chargeScore: currentScore, starCount: starCount)
                 updateEchoCharges(echoCharges)
             }
 
             if unlockedLevel == currentLevel {
                 unlockedLevel += 1
-                echoCharges.append(0)
+                echoCharges.append(.init(chargeScore: 0, starCount: 0))
                 updateEchoCharges(echoCharges)
             }
         }
@@ -944,8 +981,8 @@ struct GameView: View {
         if intensityValue >= 0.4 && currentLevel == 1 && canShowEchoPointTipOnLevel1 != nil {
             canShowEchoPointTipOnLevel1 = true
             showTip()
-        } else if intensityValue >= 0.6 && currentLevel == 6 && distance == fakeGoalDistance && canShowFakeEchoPointSpotTipOnLevel6 != nil {
-            canShowFakeEchoPointSpotTipOnLevel6 = true
+        } else if intensityValue >= 0.6 && currentLevel == 7 && distance == fakeGoalDistance && canShowFakeEchoPointSpotTipOnLevel7 != nil {
+            canShowFakeEchoPointSpotTipOnLevel7 = true
             showTip()
         }
         
@@ -990,15 +1027,15 @@ struct GameView: View {
         return row >= 0 && row < maze.count && col >= 0 && col < maze[0].count && maze[row][col]
     }
     
-    func getEchoCharges() -> [Int] {
+    func getEchoCharges() -> [EchoChargeScore] {
         if let data = storedEchoCharges.data(using: .utf8),
-           let decoded = try? JSONDecoder().decode([Int].self, from: data) {
+           let decoded = try? JSONDecoder().decode([EchoChargeScore].self, from: data) {
             return decoded
         }
         return []
     }
     
-    func updateEchoCharges(_ charges: [Int]) {
+    func updateEchoCharges(_ charges: [EchoChargeScore]) {
         if let encoded = try? JSONEncoder().encode(charges),
            let jsonString = String(data: encoded, encoding: .utf8) {
             storedEchoCharges = jsonString
