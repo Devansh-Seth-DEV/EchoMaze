@@ -16,6 +16,17 @@ struct GameView: View {
     @State private var MIN_MOVES: Int = 15
     @State private var hapticEngine: CHHapticEngine?
     @State private var playerHitWall: Bool = false
+    @State private var canShowQuickGuideTipOnLevel1: Bool? = false
+    @State private var canShowEchoPointTipOnLevel1: Bool? = false
+    @State private var canShowEchoPointFindTipOnLevel1: Bool? = false
+    @State private var canShowWallHitTipOnLevel1: Bool? = false
+    @State private var canShowMovesLeftTipOnLevel1: Bool? = false
+    @State private var canShowFakeEchoPointTipOnLevel6: Bool? = false
+    @State private var canShowFakeEchoPointSpotTipOnLevel6: Bool? = false
+    @State private var popupOpacity = 0.0
+    @State private var tipIsShowing: Bool = false
+    @State private var canDissapearTip: Bool = false
+    @State private var DISSAPEAR_TIP_DELAY: Double = 1.0
 
     var body: some View {
         ZStack {
@@ -26,22 +37,25 @@ struct GameView: View {
                 .scaledToFill()
             VStack {
                 HStack {
-                    Text("Moves: \(movesLeft)")
+                    let movesLeftText = canShowMovesLeftTipOnLevel1 == nil ? "\u{221E}" : "\(movesLeft)"
+                    Text("Moves: \(movesLeftText)")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .shadow(color: Color.white.opacity(1), radius: 10)
                         .padding(.leading, 10) // Offset from trailing edge
                         .frame(maxWidth: 200, alignment: .leading)
+
                     
                     Button(action: {
+                        hideTip()
                         showTooltip = true
                     }) {
                         Image(systemName: "lightbulb.min")
                             .resizable()
                             .foregroundColor(.mint)
                             .shadow(color: Color.mint.opacity(1), radius: 10)
-                            .shadow(color: Color.mint.opacity(1), radius: 10)
+                            .shadow(color: Color.white.opacity(1), radius: 10)
                             .frame(width: 30, height: 35)
                         
                     }
@@ -60,7 +74,7 @@ struct GameView: View {
                             .frame(width: 60, height: 60)
                             .foregroundColor(playerPosition.row == 0 ? .gray : .mint)
                     }
-                    .disabled(playerPosition.row == 0)
+                    .disabled(playerPosition.row == 0 || tipIsShowing)
                     
                     HStack {
                         Button(action: { movePlayer(direction: .left) }) {
@@ -69,7 +83,7 @@ struct GameView: View {
                                 .frame(width: 60, height: 60)
                                 .foregroundColor(playerPosition.col == 0 ? .gray : .mint)
                         }
-                        .disabled(playerPosition.col == 0)
+                        .disabled(playerPosition.col == 0 || tipIsShowing)
                         
                         Spacer()
                         
@@ -79,7 +93,7 @@ struct GameView: View {
                                 .frame(width: 60, height: 60)
                                 .foregroundColor(playerPosition.col == maze[0].count - 1 ? .gray : .mint)
                         }
-                        .disabled(playerPosition.col == maze[0].count - 1)
+                        .disabled(playerPosition.col == maze[0].count - 1 || tipIsShowing)
                     }
                     .frame(width: 200)
                     
@@ -89,7 +103,7 @@ struct GameView: View {
                             .frame(width: 60, height: 60)
                             .foregroundColor(playerPosition.row == maze.count - 1 ? .gray : .mint)
                     }
-                    .disabled(playerPosition.row == maze.count - 1)
+                    .disabled(playerPosition.row == maze.count - 1 || tipIsShowing)
                 }
                 .padding(.bottom, 20)
             }
@@ -189,13 +203,12 @@ struct GameView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 20)
                         
-                        Text("The **Echo Point** wispers the strong echo as you get closer to it, listen the echo (vibrations).\nDon't get tricked by **Fake Echo Point** trying to mislead you. It wispers the echo twice when infront of you.")
-                            .font(.headline)
-                            .foregroundColor(.mint)
-                            .multilineTextAlignment(.leading)
-                            .shadow(color: Color.mint.opacity(1), radius: 10)
-                            .padding(.horizontal, 40)
-//                            .padding(.top, 10)
+//                        Text("The **Echo Point** wispers the strong echo as you get closer to it, listen the echo (vibrations).\nDon't get tricked by **Fake Echo Point** trying to mislead you. It wispers the echo twice when infront of you.")
+//                            .font(.headline)
+//                            .foregroundColor(.mint)
+//                            .multilineTextAlignment(.leading)
+//                            .shadow(color: Color.mint.opacity(1), radius: 10)
+//                            .padding(.horizontal, 40)
                         
                         Text("Find the hidden **Echo Point** to escape")
                             .font(.headline)
@@ -217,6 +230,227 @@ struct GameView: View {
                         }
                         .padding(.bottom, 20)
                     }
+                }
+            }
+            
+            if canShowQuickGuideTipOnLevel1 ?? false {
+                VStack {
+                    Text("Need help? Tap the **bulb** icon on top to get a Quick Guide.")
+                        .font(.body)
+                        .padding()
+                        .background(Color.black.opacity(0.4))
+                        .foregroundColor(Color.white)
+                        .cornerRadius(10)
+                        .shadow(color: Color.mint, radius: 5)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.mint, lineWidth: 1)
+                                .shadow(color: Color.mint, radius: 10)
+                        )
+                        .opacity(popupOpacity) // Apply opacity for fade-in
+                        .onTapGesture {
+                            hideTip()
+                        }
+                }
+                .frame(width: 350)
+                .onAppear() {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + DISSAPEAR_TIP_DELAY) {
+                        canDissapearTip = true
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .padding(.top, 140)
+                .background(Color.clear) // Dim background
+                .onTapGesture {
+                    hideTip()
+                }
+            } else if canShowEchoPointTipOnLevel1 ?? false {
+                VStack {
+                    Text("Feel the phone vibrations. The closer you get to the **Echo Point**, the louder the vibrations will be.")
+                        .font(.body)
+                        .padding()
+                        .background(Color.black.opacity(0.4))
+                        .foregroundColor(Color.white)
+                        .cornerRadius(10)
+                        .shadow(color: Color.mint, radius: 5)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.mint, lineWidth: 1)
+                                .shadow(color: Color.mint, radius: 10)
+                        )
+                        .opacity(popupOpacity) // Apply opacity for fade-in
+                        .onTapGesture {
+                            hideTip()
+                        }
+                }
+                .frame(width: 350)
+                .onAppear() {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + DISSAPEAR_TIP_DELAY) {
+                        canDissapearTip = true
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .background(Color.clear) // Dim background
+                .onTapGesture {
+                    hideTip()
+                }
+            } else if canShowEchoPointFindTipOnLevel1 ?? false {
+                VStack {
+                    Text("You'll have to find and hit the hidden **Echo Point** to escape!. Not all walls are truly walls, one of them is the hidden Echo Point.")
+                        .font(.body)
+                        .padding()
+                        .background(Color.black.opacity(0.4))
+                        .foregroundColor(Color.white)
+                        .cornerRadius(10)
+                        .shadow(color: Color.mint, radius: 5)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.mint, lineWidth: 1)
+                                .shadow(color: Color.mint, radius: 10)
+                        )
+                        .opacity(popupOpacity) // Apply opacity for fade-in
+                        .onTapGesture {
+                            hideTip()
+                        }
+                    
+                    Text("Tap anywhere to continue.")
+//                        .padding()
+                        .font(.body)
+                        .foregroundColor(Color.white)
+                        .shadow(color: Color.mint, radius: 5)
+                        .opacity(popupOpacity)
+                }
+                .frame(width: 350)
+                .onAppear() {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + DISSAPEAR_TIP_DELAY) {
+                        canDissapearTip = true
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .background(Color.clear) // Dim background
+                .onTapGesture {
+                    hideTip()
+                }
+            } else if canShowWallHitTipOnLevel1 ?? false {
+                VStack {
+                    Text("Beware of the **Echoing Blockades** (Wall) it'll reflect back the echo, signalling a blocked path.")
+                        .font(.body)
+                        .padding()
+                        .background(Color.black.opacity(0.4))
+                        .foregroundColor(Color.white)
+                        .cornerRadius(10)
+                        .shadow(color: Color.mint, radius: 5)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.mint, lineWidth: 1)
+                                .shadow(color: Color.mint, radius: 10)
+                        )
+                        .opacity(popupOpacity) // Apply opacity for fade-in
+                        .onTapGesture {
+                            hideTip()
+                        }
+                }
+                .frame(width: 350)
+                .onAppear() {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + DISSAPEAR_TIP_DELAY) {
+                        canDissapearTip = true
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .background(Color.clear) // Dim background
+                .onTapGesture {
+                    hideTip()
+                }
+            } else if canShowMovesLeftTipOnLevel1 ?? false {
+                VStack {
+                    Text("**Every move counts**. Use them wisely to uncover the hidden escape before you run out.")
+                        .font(.body)
+                        .padding()
+                        .background(Color.black.opacity(0.4))
+                        .foregroundColor(Color.white)
+                        .cornerRadius(10)
+                        .shadow(color: Color.mint, radius: 5)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.mint, lineWidth: 1)
+                                .shadow(color: Color.mint, radius: 10)
+                        )
+                        .opacity(popupOpacity) // Apply opacity for fade-in
+                        .onTapGesture {
+                            hideTip()
+                        }
+                }
+                .frame(width: 350)
+                .onAppear() {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + DISSAPEAR_TIP_DELAY) {
+                        canDissapearTip = true
+                    }
+                }
+                .padding(.top, 120)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .background(Color.clear) // Dim background
+                .onTapGesture {
+                    hideTip()
+                }
+            } else if canShowFakeEchoPointTipOnLevel6 ?? false {
+                VStack {
+                    Text("Don't be tricked by **Fake Echo Point** they try to mislead you.")
+                        .font(.body)
+                        .padding()
+                        .background(Color.black.opacity(0.4))
+                        .foregroundColor(Color.white)
+                        .cornerRadius(10)
+                        .shadow(color: Color.mint, radius: 5)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.mint, lineWidth: 1)
+                                .shadow(color: Color.mint, radius: 10)
+                        )
+                        .opacity(popupOpacity) // Apply opacity for fade-in
+                        .onTapGesture {
+                            hideTip()
+                        }
+                }
+                .frame(width: 350)
+                .onAppear() {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + DISSAPEAR_TIP_DELAY) {
+                        canDissapearTip = true
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .background(Color.clear) // Dim background
+                .onTapGesture {
+                    hideTip()
+                }
+            } else if canShowFakeEchoPointSpotTipOnLevel6 ?? false {
+                VStack {
+                    Text("To **Spot** them, listen carefully on vibrations they whisper the echo twice when they're one block ahead of you.")
+                        .font(.body)
+                        .padding()
+                        .background(Color.black.opacity(0.4))
+                        .foregroundColor(Color.white)
+                        .cornerRadius(10)
+                        .shadow(color: Color.mint, radius: 5)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.mint, lineWidth: 1)
+                                .shadow(color: Color.mint, radius: 10)
+                        )
+                        .opacity(popupOpacity) // Apply opacity for fade-in
+                        .onTapGesture {
+                            hideTip()
+                        }
+                }
+                .frame(width: 350)
+                .onAppear() {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + DISSAPEAR_TIP_DELAY) {
+                        canDissapearTip = true
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .background(Color.clear) // Dim background
+                .onTapGesture {
+                    hideTip()
                 }
             }
             
@@ -260,7 +494,7 @@ struct GameView: View {
                             .shadow(color: Color.mint.opacity(1), radius: 10)
                             .padding()
                         
-                        Text("You reached the exit")
+                        Text("You reached the **Echo Point**")
                             .font(.title3)
                             .foregroundColor(.white)
                             .shadow(color: Color.mint.opacity(1), radius: 10)
@@ -313,6 +547,9 @@ struct GameView: View {
         .onDisappear() {
             resetGame()
         }
+        .onTapGesture {
+            hideTip()
+        }
         .onAppear() {
             MIN_MOVES = maze.count * 3
             if movesLeft == -999 {
@@ -326,6 +563,57 @@ struct GameView: View {
                     } catch {
                         print("Haptics Engine Error: \(error.localizedDescription)")
                     }
+                }
+            }
+            
+            if currentLevel == 1 && canShowQuickGuideTipOnLevel1 != nil {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    canShowEchoPointFindTipOnLevel1 = true
+                    showTip()
+                }
+            } else if currentLevel == 6 && canShowFakeEchoPointTipOnLevel6 != nil {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    canShowFakeEchoPointTipOnLevel6 = true
+                    showTip()
+                }
+            }
+        }
+    }
+    
+    private func showTip() {
+        if !tipIsShowing {
+            tipIsShowing = true
+            popupOpacity = 0.0
+            withAnimation(.easeIn(duration: 0.5)) {
+                popupOpacity = 1.0 // Fade in
+            }
+        }
+    }
+    
+    
+    private func hideTip() {
+        if tipIsShowing && canDissapearTip {
+            withAnimation(.easeOut(duration: 0.5)) {
+                popupOpacity = 0.0
+            }
+            
+            DispatchQueue.main.async {
+                tipIsShowing = false
+                canDissapearTip = false
+                if canShowQuickGuideTipOnLevel1 ?? false {
+                    canShowQuickGuideTipOnLevel1 = nil
+                } else if canShowEchoPointTipOnLevel1 ?? false {
+                    canShowEchoPointTipOnLevel1 = nil
+                } else if canShowEchoPointFindTipOnLevel1 ?? false {
+                    canShowEchoPointFindTipOnLevel1 = nil
+                } else if canShowWallHitTipOnLevel1 ?? false {
+                    canShowWallHitTipOnLevel1 = nil
+                } else if canShowMovesLeftTipOnLevel1 ?? false {
+                    canShowMovesLeftTipOnLevel1 = nil
+                } else if canShowFakeEchoPointTipOnLevel6 ?? false {
+                    canShowFakeEchoPointTipOnLevel6 = nil
+                } else if canShowFakeEchoPointSpotTipOnLevel6 ?? false {
+                    canShowFakeEchoPointSpotTipOnLevel6 = nil
                 }
             }
         }
@@ -352,7 +640,7 @@ struct GameView: View {
 
     // 🏃 Moves the player
     func movePlayer(direction: Direction) {
-        guard !showLevelComplete else { return }
+        guard !showLevelComplete, !tipIsShowing else { return }
         
         let (row, col) = playerPosition
         var newRow = row
@@ -373,6 +661,10 @@ struct GameView: View {
             triggerHapticFeedback() // Call vibration feedback
         } else {
             playerHitWall = true
+            if currentLevel == 1 && canShowWallHitTipOnLevel1 != nil {
+                canShowWallHitTipOnLevel1 = true
+                showTip()
+            }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 playerHitWall = false
             }
@@ -380,6 +672,21 @@ struct GameView: View {
         }
         
         movesLeft = max(0, movesLeft-1)
+        if canShowMovesLeftTipOnLevel1 == nil {
+            movesLeft = MIN_MOVES
+        }
+        
+        if currentLevel == 1 {
+            if movesLeft == MIN_MOVES-2 && canShowMovesLeftTipOnLevel1 != nil {
+                canShowMovesLeftTipOnLevel1 = true
+                showTip()
+            } else if movesLeft == 4 && canShowQuickGuideTipOnLevel1 != nil {
+                canShowQuickGuideTipOnLevel1 = true
+                showTip()
+            }
+        }
+        
+        
         if movesLeft == 0 && playerPosition != goalPosition {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 UINotificationFeedbackGenerator().notificationOccurred(.warning)
@@ -424,6 +731,14 @@ struct GameView: View {
         let intensity = CHHapticEventParameter(parameterID: .hapticIntensity, value: Float(intensityValue*2))
         let sharpness = CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.3)
 
+        if intensityValue >= 0.4 && currentLevel == 1 && canShowEchoPointTipOnLevel1 != nil {
+            canShowEchoPointTipOnLevel1 = true
+            showTip()
+        } else if intensityValue >= 0.6 && currentLevel == 6 && distance == fakeGoalDistance && canShowFakeEchoPointSpotTipOnLevel6 != nil {
+            canShowFakeEchoPointSpotTipOnLevel6 = true
+            showTip()
+        }
+        
         do {
             let event = CHHapticEvent(eventType: .hapticTransient,
                                       parameters: [
@@ -450,7 +765,7 @@ struct GameView: View {
                                      ))
                 }
             }
-
+            
             let pattern = try CHHapticPattern(events: events, parameters: [])
             let player = try engine.makePlayer(with: pattern)
             try player.start(atTime: CHHapticTimeImmediate)
@@ -487,25 +802,6 @@ struct GridView: View {
             color = Color.clear
         }
         return color
-    }
-    
-    func computeCellSizeAndSpacing(_ size: CGSize) -> (CGFloat, CGFloat){
-        let totalWidth = size.width - 20
-        let totalHeight = size.height - 20
-        
-        let rows = CGFloat(maze.count)
-        let cols = CGFloat(maze[0].count)
-        // If cell size is too small, reduce spacing
-//        let interMazeSpacing = max(5, min(10, totalWidth / (cols * 5)))
-        let interMazeSpacing = max(5, min(10, min(totalWidth / (cols * 5), totalHeight / (rows * 5))))
-
-
-        let availableWidth = totalWidth - ((cols - 1) * interMazeSpacing)
-        let availableHeight = totalHeight - ((rows - 1) * interMazeSpacing)
-        
-        let cellSize = min(availableWidth / cols, availableHeight / rows)
-        
-        return (cellSize, interMazeSpacing)
     }
     
     var body: some View {
