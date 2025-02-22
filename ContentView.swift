@@ -39,7 +39,7 @@ struct ContentView: View {
                         .animation(.easeIn(duration: 1), value: canBeginLaunchAnimation
                         )
                     
-                    Text("No visuals. No sound. Only touch.\nThe closer you get, the stronger you feel.\nCan you escape the unseen?")
+                    Text("No visual clues. No sound. Only touch.\nThe closer you get, the stronger you feel.\nCan you escape the unseen?")
                         .font(.headline)
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
