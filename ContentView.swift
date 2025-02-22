@@ -64,7 +64,6 @@ struct ContentView: View {
                 }
             }
             .onTapGesture {
-                // Play haptic feedback when tapped
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 
                 withAnimation(.easeIn(duration: 0.3)) {

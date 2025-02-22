@@ -2,14 +2,14 @@ import SwiftUI
 
 
 struct LevelsView: View {
-    @State private var path = NavigationPath()  // Tracks navigation state
-    @AppStorage("unlockedLevel") private var unlockedLevel = 1 // Persist unlocked levels
-    @State private var selectedLevel: Int? = nil  // Store tapped level
-    @State private var navigateToGame = false  // Controls navigation
+    @State private var path = NavigationPath()
+    @AppStorage("unlockedLevel") private var unlockedLevel = 1
+    @State private var selectedLevel: Int? = nil
+    @State private var navigateToGame = false
     
     private let MAX_LEVELS = 9
     
-    let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())] // 2 columns
+    let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
 
 
     var body: some View {
@@ -19,7 +19,7 @@ struct LevelsView: View {
                 ZStack {
                     Image("LandingTheme")
                         .resizable()
-                        .ignoresSafeArea()
+                        .ignoresSafeArea(.all)
                         .scaledToFill()
                     
                     VStack {
@@ -44,7 +44,7 @@ struct LevelsView: View {
                         LazyVGrid(columns: columns, spacing: 20) {
                             ForEach(1...MAX_LEVELS, id: \.self) { level in
                                 Button(action: {
-                                    if level <= unlockedLevel { // Only navigate if unlocked
+                                    if level <= unlockedLevel {
                                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                                         selectedLevel = level
                                         path.append(level)

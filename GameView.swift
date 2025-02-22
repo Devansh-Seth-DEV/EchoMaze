@@ -5,17 +5,71 @@ struct GameView: View {
     @Binding var path: NavigationPath
     @Binding var unlockedLevel: Int
     let currentLevel: Int
-    let maze: [[Bool]] // Injected maze layout
-    let goalPosition: (row: Int, col: Int) // Injected goal
-    let fakeGoalPosition: (row: Int, col: Int) // Injected fake goal
-    @State private var playerPosition = (row: 0, col: 0) // Start position
-    @State private var movesLeft: Int = -999
+    let maze: [[Bool]]
+    let goalPosition: (row: Int, col: Int)
+    let fakeGoalPosition: (row: Int, col: Int)
+    private let BASE_POINT: Int = 1000
+    private let EFFICIENCY_POINT: Int = 500
+    
+    @State private var playerPosition = (row: 0, col: 0)
+    
+    @State private var movesLeft: Int = 0
+    @State private var totalMoves: Int = 0
     @State private var showGameOver = false
     @State private var showLevelComplete = false
     @State private var showTooltip: Bool = false
-    @State private var MIN_MOVES: Int = 15
+    @State private var MIN_MOVES_TO_GIVE: Int = 15
     @State private var hapticEngine: CHHapticEngine?
     @State private var playerHitWall: Bool = false
+    @State private var minimumMovesRequired: Int = 0
+    @State private var totalTargetScore: Int = 1
+    @State private var starImage: [String] = Array<String>(repeating: "star.fill", count: 3)
+    @State private var starGlowRadius: [CGFloat] = Array<CGFloat>(repeating: 0, count: 3)
+    
+    @State private var currentScore: Int = 300 {
+        didSet {
+            if currentScore > totalTargetScore {
+                currentScore = totalTargetScore
+            }
+            
+            
+        }
+    }
+    
+    init(path: Binding<NavigationPath>, unlockedLevel: Binding<Int>, currentLevel: Int, maze: [[Bool]], goalPosition: (row: Int, col: Int), fakeGoalPosition: (row: Int, col: Int)) {
+        self._path = path
+        self._unlockedLevel = unlockedLevel
+        self.currentLevel = currentLevel
+        self.maze = maze
+        self.goalPosition = goalPosition
+        self.fakeGoalPosition = fakeGoalPosition
+       
+        let minMovesToGive = max(15, maze.count*3)
+        self._MIN_MOVES_TO_GIVE = .init(initialValue: minMovesToGive)
+        
+        self._minimumMovesRequired = .init(initialValue: abs(playerPosition.0 - goalPosition.0) + abs(playerPosition.1 - goalPosition.1))
+        
+        self._totalTargetScore = .init(
+            initialValue: BASE_POINT + (currentLevel * EFFICIENCY_POINT * self.MIN_MOVES_TO_GIVE)
+        )
+        
+        self._totalMoves = .init(initialValue: minMovesToGive)
+        self._movesLeft = .init(initialValue: minMovesToGive)
+        self._currentScore = .init(initialValue: calculateCurrentScore())
+    }
+    
+    private var starCount: Int {
+        let percentage = Double(currentScore) / Double(totalTargetScore)
+        if percentage >= 0.75 {
+            return 3
+        } else if percentage >= 0.50 {
+            return 2
+        } else if percentage >= 0.25 {
+            return 1
+        } else {
+            return 0
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -25,32 +79,119 @@ struct GameView: View {
                 .ignoresSafeArea()
                 .scaledToFill()
             VStack {
-                HStack {
-                    Text("Moves: \(movesLeft)")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .shadow(color: Color.white.opacity(1), radius: 10)
-                        .padding(.leading, 10) // Offset from trailing edge
-                        .frame(maxWidth: 200, alignment: .leading)
+                //MARK: GUIDE BULB
+                Button(action: {
+                    showTooltip = true
+                }) {
+                    Image(systemName: "lightbulb.min")
+                        .resizable()
+                        .foregroundColor(.mint)
+                        .shadow(color: Color.white.opacity(1), radius: 5)
+                        .frame(width: 30, height: 35)
                     
-                    Button(action: {
-                        showTooltip = true
-                    }) {
-                        Image(systemName: "lightbulb.min")
-                            .resizable()
-                            .foregroundColor(.mint)
-                            .shadow(color: Color.mint.opacity(1), radius: 10)
-                            .shadow(color: Color.mint.opacity(1), radius: 10)
-                            .frame(width: 30, height: 35)
-                        
-                    }
-                    .padding(.leading, 70)
                 }
-                
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.trailing, 40)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.mint.opacity(0.7), lineWidth: 1)
+                        .background(Color.black.opacity(0.3))
+                        .frame(width: 380, height: 80)
+                        .shadow(color: Color.mint.opacity(1), radius: 10)
+                        .padding(.horizontal, 20)
+                    
+                    
+                    HStack(alignment: .center, spacing: 10) {
+                        ZStack {
+                            HStack {
+                                ForEach(0..<3, id: \.self) { index in
+                                    Image(systemName: starImage[index])
+                                    .font(.title3)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(
+                                        starCount > index ? Color.mint : .white
+                                    )
+                                    .shadow(color: Color.mint.opacity(1), radius: 2)
+                                    .shadow(color: Color.white.opacity(1), radius: starGlowRadius[index])
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .padding(.leading, 10)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 28)
+                                .stroke(Color.mint.opacity(1), lineWidth: 1)
+                                .background(Color.black.opacity(0.3))
+                                .frame(width: 100, height: 90)
+                                .shadow(color: Color.mint.opacity(1), radius: 10)
+                                .overlay {
+                                    VStack(spacing: 10) {
+                                        RoundedRectangle(cornerRadius: 24)
+                                            .stroke(Color.mint.opacity(1), lineWidth: 1)
+                                            .frame( width: 90, height: 30)
+                                            .background(Color.mint.opacity(0.1))
+                                            .cornerRadius(12)
+                                            .shadow(color: Color.mint.opacity(1), radius: 5)
+                                            .shadow(color: Color.white.opacity(1), radius: 5)
+                                            .overlay {
+                                                Text("\(currentLevel)")
+                                                    .font(.body)
+                                                    .fontWeight(.bold)
+                                                    .foregroundColor(Color.white.opacity(0.9))
+                                                    .shadow(color: Color.mint.opacity(1), radius: 10)
+                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                            }
+                                        
+                                        Text("\(movesLeft)")
+                                            .font(.largeTitle)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.white)
+                                            .shadow(color: Color.white.opacity(1), radius: 10)
+                                            .shadow(color: Color.white.opacity(1), radius: 10)
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                                }
+                        }
+                        .cornerRadius(28)
+                        .frame(maxWidth: 380, alignment: .center)
+                        
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color.mint.opacity(1), lineWidth: 1)
+                                .background(Color.mint.opacity(0.2))
+                                .cornerRadius(16)
+                                .frame(maxWidth: .infinity, maxHeight: 60)
+                                .overlay {
+                                    VStack(spacing: 5) {
+                                        Text("Echo Charge")
+                                            .font(.caption)
+                                            .fontWeight(.medium)
+                                            .foregroundColor(.white)
+                                            .shadow(color: Color.mint.opacity(1), radius: 5)
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                        
+                                        Text("\(currentScore)")
+                                            .font(.title3)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.white)
+                                            .shadow(color: Color.white.opacity(1), radius: 10)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .frame(maxWidth: 380, alignment: .center)
+                }
+                .cornerRadius(16)
+                .padding(.bottom, 60)
+
                 //MARK: Maze Init
-                GridView(maze: maze, playerPosition: playerPosition, goalPosition: goalPosition, playerHitWall: playerHitWall)
-                    .padding(.bottom, 10)
+                GridView(maze: maze, playerPosition: playerPosition, goalPosition: goalPosition, playerHitWall: playerHitWall, starCount: starCount)
+                    .padding(.bottom, 20)
                 
                 //MARK: Arrow Controlls
                 VStack {
@@ -91,6 +232,8 @@ struct GameView: View {
                     }
                     .disabled(playerPosition.row == maze.count - 1)
                 }
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, 20)
                 .padding(.bottom, 20)
             }
             
@@ -195,7 +338,6 @@ struct GameView: View {
                             .multilineTextAlignment(.leading)
                             .shadow(color: Color.mint.opacity(1), radius: 10)
                             .padding(.horizontal, 40)
-//                            .padding(.top, 10)
                         
                         Text("Find the hidden **Echo Point** to escape")
                             .font(.headline)
@@ -223,7 +365,6 @@ struct GameView: View {
             if showGameOver {
                 ZStack {
                     Color.black.opacity(0.8).edgesIgnoringSafeArea(.all)
-                    
                     VStack {
                         Text("Game Over")
                             .font(.largeTitle)
@@ -247,7 +388,9 @@ struct GameView: View {
                                 .cornerRadius(12)
                         }
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             } else if showLevelComplete {
                 ZStack {
                     Color.black.opacity(0.8).edgesIgnoringSafeArea(.all)
@@ -297,7 +440,7 @@ struct GameView: View {
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button(action: {
-                    path.removeLast(path.count) // Always go back to LevelsView
+                    path.removeLast(path.count)
                 }) {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.mint)
@@ -314,18 +457,12 @@ struct GameView: View {
             resetGame()
         }
         .onAppear() {
-            MIN_MOVES = maze.count * 3
-            if movesLeft == -999 {
-                movesLeft = abs(goalPosition.0) + abs(goalPosition.1)
-                movesLeft = max(movesLeft<<1, MIN_MOVES)
-                
-                if CHHapticEngine.capabilitiesForHardware().supportsHaptics {
-                    do {
-                        hapticEngine = try CHHapticEngine()
-                        try hapticEngine?.start()
-                    } catch {
-                        print("Haptics Engine Error: \(error.localizedDescription)")
-                    }
+            if CHHapticEngine.capabilitiesForHardware().supportsHaptics {
+                do {
+                    hapticEngine = try CHHapticEngine()
+                    try hapticEngine?.start()
+                } catch {
+                    print("Haptics Engine Error: \(error.localizedDescription)")
                 }
             }
         }
@@ -337,10 +474,10 @@ struct GameView: View {
     }
     
     func resetGame() {
-        playerPosition = (0, 0) // Back to start
-        movesLeft = abs(goalPosition.0) + abs(goalPosition.1) // Reset Moves
-        movesLeft = max(movesLeft<<1, MIN_MOVES)
-        showGameOver = false // Hide pop-up
+        playerPosition = (0, 0)
+        movesLeft = abs(goalPosition.0) + abs(goalPosition.1)
+        movesLeft = max(movesLeft<<1, MIN_MOVES_TO_GIVE)
+        showGameOver = false
         showLevelComplete = false
     }
 
@@ -348,12 +485,35 @@ struct GameView: View {
     enum Direction {
         case up, down, left, right
     }
+    
+    func updateStarStatus() {
+        for i in 0..<3 {
+            if i > starCount-1 {
+                withAnimation(.easeInOut) {
+                    starImage[i] = "star"
+                    starGlowRadius[i] = 0
+                }
+            }
+            else {
+                withAnimation(.easeInOut) {
+                    starImage[i] = "star.fill"
+                    starGlowRadius[i] = 2
+                }
+            }
+        }
+    }
+
+    func calculateCurrentScore() -> Int {
+        let extraMoves = max(0, totalMoves - movesLeft - minimumMovesRequired)
+        let penalty = max(100, (totalTargetScore - BASE_POINT) / (totalMoves - minimumMovesRequired))
+        let currentScore = max(0, totalTargetScore - (extraMoves * penalty))
+        return currentScore
+    }
 
 
-    // 🏃 Moves the player
     func movePlayer(direction: Direction) {
         guard !showLevelComplete else { return }
-        
+        currentScore += 50
         let (row, col) = playerPosition
         var newRow = row
         var newCol = col
@@ -370,7 +530,7 @@ struct GameView: View {
         
         if canMove(to: (newRow, newCol)) {
             playerPosition = (newRow, newCol)
-            triggerHapticFeedback() // Call vibration feedback
+            triggerHapticFeedback()
         } else {
             playerHitWall = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
@@ -380,6 +540,9 @@ struct GameView: View {
         }
         
         movesLeft = max(0, movesLeft-1)
+        currentScore = calculateCurrentScore()
+        updateStarStatus()
+        
         if movesLeft == 0 && playerPosition != goalPosition {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 UINotificationFeedbackGenerator().notificationOccurred(.warning)
@@ -388,12 +551,12 @@ struct GameView: View {
         }
 
         
-        // **Goal Check - Strongest Vibration**
+      
         if playerPosition == goalPosition {
             let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.error) // First strong hit
+            generator.notificationOccurred(.error)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                generator.notificationOccurred(.success) // Second strong hit
+                generator.notificationOccurred(.success)
             }
             showLevelComplete = true
             unlockedLevel += unlockedLevel == currentLevel ? 1 : 0
@@ -405,7 +568,7 @@ struct GameView: View {
 
         let dx = abs(playerPosition.0 - goalPosition.0)
         let dy = abs(playerPosition.1 - goalPosition.1)
-        let goalDistance = dx + dy // Manhattan Distance
+        let goalDistance = dx + dy
         
         let fakeGoalDistance: Int
         if fakeGoalPosition.0 != -1 && fakeGoalPosition.1 != -1 {
@@ -418,7 +581,6 @@ struct GameView: View {
         
         let distance = min(goalDistance, fakeGoalDistance)
         
-        // Normalize intensity (closer = stronger)
         let maxDistance = Double(maze.count)
         let intensityValue = max(0.1, 1.0 - (Double(distance) / maxDistance))
         let intensity = CHHapticEventParameter(parameterID: .hapticIntensity, value: Float(intensityValue*2))
@@ -459,7 +621,6 @@ struct GameView: View {
         }
     }
 
-    // Checks if movement is possible
     private func canMove(to newPosition: (row: Int, col: Int)) -> Bool {
         guard movesLeft > 0 else { return false }
         let (row, col) = newPosition
@@ -473,7 +634,9 @@ struct GridView: View {
     let playerPosition: (row: Int, col: Int)
     let goalPosition: (row: Int, col: Int)
     let playerHitWall: Bool
+    let starCount: Int
     private let interMazeSpacing: CGFloat = 10
+    private let MAX_GRID_SIZE: CGFloat = 300
     @State var cellSize: CGFloat = 0
     
     func getCellColor(_ row: Int, _ col: Int) -> Color {
@@ -482,30 +645,11 @@ struct GridView: View {
             color = playerHitWall ? Color.red.opacity(0.4) : Color.mint
         } else if goalPosition == (row, col) ||
                     !maze[row][col] {
-            color = Color.white.opacity(0.5)
+            color = Color.white.opacity(0.3)
         } else {
             color = Color.clear
         }
         return color
-    }
-    
-    func computeCellSizeAndSpacing(_ size: CGSize) -> (CGFloat, CGFloat){
-        let totalWidth = size.width - 20
-        let totalHeight = size.height - 20
-        
-        let rows = CGFloat(maze.count)
-        let cols = CGFloat(maze[0].count)
-        // If cell size is too small, reduce spacing
-//        let interMazeSpacing = max(5, min(10, totalWidth / (cols * 5)))
-        let interMazeSpacing = max(5, min(10, min(totalWidth / (cols * 5), totalHeight / (rows * 5))))
-
-
-        let availableWidth = totalWidth - ((cols - 1) * interMazeSpacing)
-        let availableHeight = totalHeight - ((rows - 1) * interMazeSpacing)
-        
-        let cellSize = min(availableWidth / cols, availableHeight / rows)
-        
-        return (cellSize, interMazeSpacing)
     }
     
     var body: some View {
@@ -524,6 +668,7 @@ struct GridView: View {
                 }
             }
         }
+        .frame(maxWidth: MAX_GRID_SIZE, maxHeight: MAX_GRID_SIZE, alignment: .center)
         .onAppear() {
             let sizeOffset = max(maze.count, maze[0].count)
             cellSize = CGFloat(80 - (sizeOffset * 5))
