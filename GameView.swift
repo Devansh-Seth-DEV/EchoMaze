@@ -13,7 +13,7 @@ struct GameView: View {
 
     private let BASE_POINT: Int = 1000
     private let EFFICIENCY_POINT: Int = 500
-    private let FAKE_ECHO_INTRO_LEVEL: Int = 7
+    private let FAKE_ECHO_INTRO_LEVEL: Int = FAKE_ECHO_STARTING_LEVEL
     private var WALL_HIT_PENALTY: Int = 1000
     
     private var movesLeftString: String {

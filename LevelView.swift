@@ -247,13 +247,25 @@ struct LevelMapView: View {
     let level: Int
     let unlockedLevels: Int
     let echoChargeScore: EchoChargeScore
-    
+        
     @State private var starImage = Array<String>(repeating: "star", count: 3)
     @State private var starGlowRadius = Array<CGFloat>(repeating: 0, count: 3)
     
     
     private var chargeScoreString: String {
         return self.echoChargeScore.chargeScore == 0 ? "" : "\(self.echoChargeScore.chargeScore)"
+    }
+    
+    private var levelText: Text? {
+        if level == levels.count {
+            return Text("The Silent Exit")
+        } else if level == FAKE_ECHO_STARTING_LEVEL {
+            return Text("Echo's Illusion")
+        } else if level == 15 {
+            return Text("Echo’s Awakening")
+        } else if level == 30 {
+            return Text("The Silent Threshold")
+        } else { return nil }
     }
     
     init(level: Int,
@@ -304,6 +316,24 @@ struct LevelMapView: View {
                         .shadow(color: Color.white, radius: level <= unlockedLevels ? 10 : 0)
                 )
                 .frame(maxWidth: .infinity, alignment: .center)
+            
+            if level == levels.count ||
+                level == FAKE_ECHO_STARTING_LEVEL ||
+                level == 15 ||
+                level == 30 {
+                levelText?
+                    .font(.body)
+                    .padding()
+                    .background(Color.black.opacity(0.4))
+                    .foregroundColor(Color.white)
+                    .cornerRadius(12)
+                    .shadow(color: Color.mint, radius: 5)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.mint, lineWidth: 1)
+                            .shadow(color: Color.mint, radius: 10)
+                    )
+            }
         }
         .onAppear() {
             updateStarStatus()

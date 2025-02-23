@@ -1,3 +1,5 @@
+var FAKE_ECHO_STARTING_LEVEL: Int { 7 }
+
 var levels: [(
     [[Bool]],               // Maze
     (row: Int, col: Int),   // Goal Position
@@ -477,5 +479,5 @@ var levels: [(
         [true, true, true, false, true, true, true, false, true],
         [false, true, false, true, false, false, true, true, false],
         [true, true, true, true, true, false, false, false, false]
-    ], (6, 8), (0, 5)),
+    ], (6, 8), (6, 7)),
 ]}
