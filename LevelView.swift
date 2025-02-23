@@ -5,7 +5,9 @@ struct LevelsView: View {
     @State private var path: NavigationPath = NavigationPath()
     @AppStorage("unlockedLevel") private var unlockedLevel = 1
     @AppStorage("storeEchoCharges") private var storedEchoCharges: String = "[]"
+    
     @State private var scrollToLevelFirstTime: Bool? = false
+    
     @State private var canShowStartLevel1TutorialTip: Bool? = false {
         didSet {
             if let condition = self.canShowStartLevel1TutorialTip, condition == true {
@@ -23,16 +25,15 @@ struct LevelsView: View {
 
     private var echoChargesCollected: Int {
         var charges: Int = 0
-        getEchoCharges().forEach {
-            charges += $0.chargeScore
-        }
-        
+        getEchoCharges().forEach { charges += $0.chargeScore }
         return charges
     }
     
     init() {
         if unlockedLevel == 1 && getEchoCharges().count == 0 {
-            let echoCharges = Array<EchoChargeScore>(repeating: .init(chargeScore: 0, starCount: 0), count: levels.count)
+            let echoCharges = Array<EchoChargeScore>(repeating: .init(chargeScore: 0,
+                                                                      starCount: 0),
+                                                     count: levels.count)
             updateEchoCharges(echoCharges)
         }
     }
@@ -86,7 +87,9 @@ struct LevelsView: View {
                             ScrollView(.vertical, showsIndicators: false) {
                                 VStack {
                                     ForEach(levels.indices.reversed(), id: \.self) { index in
-                                        LevelMapView(level: index+1, unlockedLevels: unlockedLevel, echoChargeScore: getEchoCharges()[index])
+                                        LevelMapView(level: index+1,
+                                                     unlockedLevels: unlockedLevel,
+                                                     echoChargeScore: getEchoCharges()[index])
                                             .offset(x: (index).isMultiple(of: 2) ? -80 : 80)
                                             .onTapGesture {
                                                 if canShowStartLevel1TutorialTip ?? false {
@@ -106,7 +109,8 @@ struct LevelsView: View {
                                       y: UIScreen.main.bounds.height - 520)
                             .background(Color.clear.ignoresSafeArea())
                             .onAppear() {
-                                if unlockedLevel == 1 && canShowStartLevel1TutorialTip != nil {
+                                if unlockedLevel == 1 &&
+                                    canShowStartLevel1TutorialTip != nil {
                                     canShowStartLevel1TutorialTip = true
                                 }
                                 
@@ -120,11 +124,14 @@ struct LevelsView: View {
                         }
                     }
                     .padding(10)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .frame(maxWidth: .infinity,
+                           maxHeight: .infinity,
+                           alignment: .center)
                     
 
                     
-                    if scrollToLevelFirstTime == true && (canShowStartLevel1TutorialTip ?? false) {
+                    if scrollToLevelFirstTime == true &&
+                        (canShowStartLevel1TutorialTip ?? false) {
                         VStack(spacing: 30) {
                             Text("**Welcome**\n\n**Level 1** is a great starting point. It’s designed to help you get familiar with the game mechanics. Let’s get started!")
                                 .font(.body)
@@ -145,7 +152,9 @@ struct LevelsView: View {
                                 .font(.body)
                                 .foregroundColor(Color.white)
                         }
-                        .frame(maxWidth: 350, maxHeight: .infinity, alignment: .center)
+                        .frame(maxWidth: 350,
+                               maxHeight: .infinity,
+                               alignment: .center)
                         .padding(.top, 250)
                         .onAppear() {
                             DispatchQueue.main.asyncAfter(deadline: .now() + DISSAPEAR_TIP_DELAY) {
@@ -173,7 +182,9 @@ struct LevelsView: View {
             }
             .onAppear() {
                 if unlockedLevel == 1 {
-                    var echoChargeValue = Array<EchoChargeScore>(repeating: .init(chargeScore: 0, starCount: 0), count: levels.count)
+                    var echoChargeValue = Array<EchoChargeScore>(repeating: .init(chargeScore: 0,
+                                                                                  starCount: 0),
+                                                                 count: levels.count)
                     if storedEchoCharges != "[]" {
                         for (index, echoCharge) in getEchoCharges().enumerated() {
                             echoChargeValue[index] = echoCharge
@@ -189,18 +200,14 @@ struct LevelsView: View {
         if !tipIsShowing {
             tipIsShowing = true
             popupOpacity = 0.0
-            withAnimation(.easeIn(duration: 0.5)) {
-                popupOpacity = 1.0 // Fade in
-            }
+            withAnimation(.easeIn(duration: 0.5)) { popupOpacity = 1.0 }
         }
     }
     
     
     private func hideTip() {
         if tipIsShowing && canDissapearTip {
-            withAnimation(.easeOut(duration: 0.5)) {
-                popupOpacity = 0.0
-            }
+            withAnimation(.easeOut(duration: 0.5)) { popupOpacity = 0.0 }
             
             DispatchQueue.main.async {
                 tipIsShowing = false
@@ -229,6 +236,13 @@ struct LevelsView: View {
     }
 }
 
+
+struct EchoChargeScore: Codable {
+    var chargeScore: Int
+    var starCount: Int
+}
+
+
 struct LevelMapView: View {
     let level: Int
     let unlockedLevels: Int
@@ -237,30 +251,17 @@ struct LevelMapView: View {
     @State private var starImage = Array<String>(repeating: "star", count: 3)
     @State private var starGlowRadius = Array<CGFloat>(repeating: 0, count: 3)
     
-    init(level: Int, unlockedLevels: Int, echoChargeScore: EchoChargeScore) {
-        self.level = level
-        self.unlockedLevels = unlockedLevels
-        self.echoChargeScore = echoChargeScore
-    }
     
     private var chargeScoreString: String {
         return self.echoChargeScore.chargeScore == 0 ? "" : "\(self.echoChargeScore.chargeScore)"
     }
     
-    func updateStarStatus() {
-        for i in 0..<3 {
-            if i > echoChargeScore.starCount-1 {
-                withAnimation(.easeInOut) {
-                    starImage[i] = "star"
-                    starGlowRadius[i] = 0
-                }
-            } else {
-                withAnimation(.easeInOut) {
-                    starImage[i] = "star.fill"
-                    starGlowRadius[i] = 2
-                }
-            }
-        }
+    init(level: Int,
+         unlockedLevels: Int,
+         echoChargeScore: EchoChargeScore) {
+        self.level = level
+        self.unlockedLevels = unlockedLevels
+        self.echoChargeScore = echoChargeScore
     }
     
     
@@ -277,7 +278,8 @@ struct LevelMapView: View {
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(
-                            (echoChargeScore.starCount > index ? Color.mint : .white).opacity(level <= unlockedLevels ? 1 : 0)
+                            (echoChargeScore.starCount > index ? Color.mint : .white)
+                                .opacity(level < unlockedLevels ? 1 : 0)
                         )
                         .shadow(color: Color.mint.opacity(1), radius: 2)
                         .shadow(color: Color.white.opacity(1), radius: starGlowRadius[index])
@@ -307,10 +309,20 @@ struct LevelMapView: View {
             updateStarStatus()
         }
     }
-}
-
-
-struct EchoChargeScore: Codable {
-    var chargeScore: Int
-    var starCount: Int
+    
+    func updateStarStatus() {
+        for i in 0..<3 {
+            if i > echoChargeScore.starCount-1 {
+                withAnimation(.easeInOut) {
+                    starImage[i] = "star"
+                    starGlowRadius[i] = 0
+                }
+            } else {
+                withAnimation(.easeInOut) {
+                    starImage[i] = "star.fill"
+                    starGlowRadius[i] = 2
+                }
+            }
+        }
+    }
 }

@@ -2,32 +2,34 @@ import SwiftUI
 
 struct GameTutorialView: View {
     @Binding var showTutorial: Bool
-    
     @State private var navigateToIntroGameplay: Bool = false
+    @State private var popupOpacity = 0.0
+    @State private var tipIsShowing: Bool = false
+    @State private var canDissapearTip: Bool = false
+    @State private var DISSAPEAR_TIP_DELAY: Double = 1.0
     
     @State private var canShowQuickGuideTip: Bool? = false {
         didSet {
-            if let condition = self.canShowQuickGuideTip, condition == true {
+            if let condition = self.canShowQuickGuideTip,
+               condition == true {
                 showTip()
             }
-        }
-    }
+        }}
     
     @State private var canShowEchoPointTip: Bool? = false {
         didSet {
-            if let condition = self.canShowEchoPointTip, condition == true {
+            if let condition = self.canShowEchoPointTip,
+               condition == true {
                 showTip()
-            }
-        }
-    }
+            }}}
     
     @State private var canShowEchoPointFindTip: Bool? = false {
         didSet {
-            if let condition = self.canShowEchoPointFindTip, condition == true {
+            if let condition = self.canShowEchoPointFindTip,
+               condition == true {
                 showTip()
             }
-        }
-    }
+        }}
     
     private var tipText: Text? {
         if canShowQuickGuideTip ?? false {
@@ -38,11 +40,7 @@ struct GameTutorialView: View {
             return Text("Find and Deactivate the **Echo Point** before the silence claims you!")
         } else { return nil }
     }
-    
-    @State private var popupOpacity = 0.0
-    @State private var tipIsShowing: Bool = false
-    @State private var canDissapearTip: Bool = false
-    @State private var DISSAPEAR_TIP_DELAY: Double = 1.0
+
     
     var body: some View {
         NavigationStack {
@@ -68,7 +66,8 @@ struct GameTutorialView: View {
                                     .shadow(color: Color.mint, radius: 10)
                             )
                             .opacity(popupOpacity)
-                            .animation(.easeInOut(duration: 1), value: tipIsShowing)
+                            .animation(.easeInOut(duration: 1),
+                                       value: tipIsShowing)
                         
                         Text(!(canShowEchoPointFindTip ?? false) ? "Tap anywhere to continue..." : "Tap to begin")
                             .font(.body)
@@ -80,7 +79,9 @@ struct GameTutorialView: View {
                             canDissapearTip = true
                         }
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .frame(maxWidth: .infinity,
+                           maxHeight: .infinity,
+                           alignment: .center)
                     .background(Color.clear)
                 }
                 
@@ -103,19 +104,14 @@ struct GameTutorialView: View {
         if !tipIsShowing {
             tipIsShowing = true
             popupOpacity = 0.0
-            withAnimation(.easeIn(duration: 0.5)) {
-                popupOpacity = 1.0
-            }
+            withAnimation(.easeIn(duration: 0.5)) { popupOpacity = 1.0 }
         }
     }
     
     
     private func hideTip() {
         if tipIsShowing && canDissapearTip {
-            withAnimation(.easeInOut(duration: 0.5)) {
-                popupOpacity = 0.0
-
-            }
+            withAnimation(.easeInOut(duration: 0.5)) { popupOpacity = 0.0 }
             
             tipIsShowing = false
             canDissapearTip = false

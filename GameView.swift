@@ -13,7 +13,40 @@ struct GameView: View {
 
     private let BASE_POINT: Int = 1000
     private let EFFICIENCY_POINT: Int = 500
-    private let WALL_HIT_PENALTY: Int = 1000
+    private let FAKE_ECHO_INTRO_LEVEL: Int = 7
+    private var WALL_HIT_PENALTY: Int = 1000
+    
+    private var movesLeftString: String {
+        return currentLevel == 1 ? "\u{221E}" : "\(movesLeft)"
+    }
+    
+    private var gameOverDescriptionText: Text {
+        return currentScore <= 0 ? Text("You ran out of **Echo Charge**") : Text("You ran out of **Moves**")
+    }
+    
+    
+    private var starCount: Int {
+        let percentage = Double(currentScore) / Double(totalTargetScore)
+        if percentage >= 0.75 {
+            return 3
+        } else if percentage >= 0.50 {
+            return 2
+        } else if percentage >= 0.25 {
+            return 1
+        } else {
+            return 0
+        }
+    }
+    
+    private var levelCompleteDescriptionText: Text {
+        if starCount == 3 {
+            return Text("That was a fantastic win.\nYou really brought your **A-game**!")
+        } else if starCount == 2 {
+            return Text("Nice job on the win!\nThat was impressive!")
+        } else {
+            return Text("Great job! You did it!")
+        }
+    }
 
     @State private var playerPosition = (row: 0, col: 0)
     @State private var movesLeft: Int = 0
@@ -48,28 +81,16 @@ struct GameView: View {
             if currentScore > totalTargetScore {
                 currentScore = totalTargetScore
             }
-        }
-    }
+        }}
+
     
-    private var movesLeftString: String {
-        return currentLevel == 1 ? "\u{221E}" : "\(movesLeft)"
-    }
-    
-    private var gameOverDescriptionText: Text {
-        return currentScore <= 0 ? Text("You ran out of **Echo Charge**") : Text("You ran out of **Moves**")
-    }
-    
-    private var levelCompleteDescriptionText: Text {
-        if starCount == 3 {
-            return Text("That was a fantastic win.\nYou really brought your **A-game**!")
-        } else if starCount == 2 {
-            return Text("Nice job on the win!\nThat was impressive!")
-        } else {
-            return Text("Great job! You did it!")
-        }
-    }
-    
-    init(path: Binding<NavigationPath>, unlockedLevel: Binding<Int>, storedEchoCharges: Binding<String>, currentLevel: Int, maze: [[Bool]], goalPosition: (row: Int, col: Int), fakeGoalPosition: (row: Int, col: Int)) {
+    init(path: Binding<NavigationPath>,
+         unlockedLevel: Binding<Int>,
+         storedEchoCharges: Binding<String>,
+         currentLevel: Int,
+         maze: [[Bool]],
+         goalPosition: (row: Int, col: Int),
+         fakeGoalPosition: (row: Int, col: Int)) {
         self._path = path
         self._unlockedLevel = unlockedLevel
         self._storedEchoCharges = storedEchoCharges
@@ -82,7 +103,9 @@ struct GameView: View {
         let minMovesToGive = max(15, maze.count*3)
         self._MIN_MOVES_TO_GIVE = .init(initialValue: minMovesToGive)
         
-        self._minimumMovesRequired = .init(initialValue: abs(playerPosition.0 - goalPosition.0) + abs(playerPosition.1 - goalPosition.1))
+        self._minimumMovesRequired = .init(initialValue:
+                                            abs(playerPosition.0 - goalPosition.0) +
+                                           abs(playerPosition.1 - goalPosition.1))
         
         self._totalTargetScore = .init(
             initialValue: BASE_POINT + (currentLevel * EFFICIENCY_POINT * self.MIN_MOVES_TO_GIVE)
@@ -93,20 +116,10 @@ struct GameView: View {
         self._currentScore = .init(initialValue: totalTargetScore)
         
         self._level1Counter = .init(initialValue: currentLevel != 1 ? nil : minMovesToGive)
+        
+        WALL_HIT_PENALTY = BASE_POINT * currentLevel
     }
-    
-    private var starCount: Int {
-        let percentage = Double(currentScore) / Double(totalTargetScore)
-        if percentage >= 0.75 {
-            return 3
-        } else if percentage >= 0.50 {
-            return 2
-        } else if percentage >= 0.25 {
-            return 1
-        } else {
-            return 0
-        }
-    }
+
 
     var body: some View {
         ZStack {
@@ -130,6 +143,7 @@ struct GameView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .padding(.trailing, 40)
+                //MARK: Progress Visuals
                 ZStack {
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(Color.mint.opacity(0.7), lineWidth: 1)
@@ -150,7 +164,8 @@ struct GameView: View {
                                         starCount > index ? Color.mint : .white
                                     )
                                     .shadow(color: Color.mint.opacity(1), radius: 2)
-                                    .shadow(color: Color.white.opacity(1), radius: starGlowRadius[index])
+                                    .shadow(color: Color.white.opacity(1),
+                                            radius: starGlowRadius[index])
                                 }
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -190,7 +205,9 @@ struct GameView: View {
                                             .shadow(color: Color.white.opacity(1), radius: 10)
                                             .frame(maxWidth: .infinity, alignment: .center)
                                     }
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                                    .frame(maxWidth: .infinity,
+                                           maxHeight: .infinity,
+                                           alignment: .top)
                                 }
                         }
                         .cornerRadius(28)
@@ -217,7 +234,9 @@ struct GameView: View {
                                             .foregroundColor(.white)
                                             .shadow(color: Color.white.opacity(1), radius: 10)
                                     }
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                    .frame(maxWidth: .infinity,
+                                           maxHeight: .infinity,
+                                           alignment: .center)
                                 }
                         }
                     }
@@ -227,8 +246,12 @@ struct GameView: View {
                 .cornerRadius(16)
                 .padding(.bottom, 60)
 
-                //MARK: Maze Init
-                GridView(maze: maze, playerPosition: playerPosition, goalPosition: goalPosition, playerHitWall: playerHitWall, starCount: starCount)
+                //MARK: Maze Initialisation
+                GridView(maze: maze,
+                         playerPosition: playerPosition,
+                         goalPosition: goalPosition,
+                         playerHitWall: playerHitWall,
+                         starCount: starCount)
                     .padding(.bottom, 20)
                 
                 //MARK: Arrow Controlls
@@ -414,7 +437,7 @@ struct GameView: View {
                                 .stroke(Color.mint, lineWidth: 1)
                                 .shadow(color: Color.mint, radius: 10)
                         )
-                        .opacity(popupOpacity) // Apply opacity for fade-in
+                        .opacity(popupOpacity)
                         .onTapGesture {
                             hideTip()
                         }
@@ -425,9 +448,11 @@ struct GameView: View {
                         canDissapearTip = true
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .frame(maxWidth: .infinity,
+                       maxHeight: .infinity,
+                       alignment: .top)
                 .padding(.top, 140)
-                .background(Color.clear) // Dim background
+                .background(Color.clear)
                 .onTapGesture {
                     hideTip()
                 }
@@ -445,7 +470,7 @@ struct GameView: View {
                                 .stroke(Color.mint, lineWidth: 1)
                                 .shadow(color: Color.mint, radius: 10)
                         )
-                        .opacity(popupOpacity) // Apply opacity for fade-in
+                        .opacity(popupOpacity)
                         .onTapGesture {
                             hideTip()
                         }
@@ -457,7 +482,7 @@ struct GameView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                .background(Color.clear) // Dim background
+                .background(Color.clear)
                 .onTapGesture {
                     hideTip()
                 }
@@ -492,7 +517,9 @@ struct GameView: View {
                         canDissapearTip = true
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .frame(maxWidth: .infinity,
+                       maxHeight: .infinity,
+                       alignment: .center)
                 .background(Color.clear)
                 .onTapGesture {
                     hideTip()
@@ -522,7 +549,9 @@ struct GameView: View {
                         canDissapearTip = true
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .frame(maxWidth: .infinity,
+                       maxHeight: .infinity,
+                       alignment: .center)
                 .background(Color.clear)
                 .onTapGesture {
                     hideTip()
@@ -553,7 +582,9 @@ struct GameView: View {
                     }
                 }
                 .padding(.top, 120)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .frame(maxWidth: .infinity,
+                       maxHeight: .infinity,
+                       alignment: .top)
                 .background(Color.clear)
                 .onTapGesture {
                     hideTip()
@@ -583,7 +614,9 @@ struct GameView: View {
                         canDissapearTip = true
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .frame(maxWidth: .infinity,
+                       maxHeight: .infinity,
+                       alignment: .center)
                 .background(Color.clear)
                 .onTapGesture {
                     hideTip()
@@ -613,7 +646,9 @@ struct GameView: View {
                         canDissapearTip = true
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .frame(maxWidth: .infinity,
+                       maxHeight: .infinity,
+                       alignment: .center)
                 .background(Color.clear)
                 .onTapGesture {
                     hideTip()
@@ -648,9 +683,13 @@ struct GameView: View {
                                 resetGame()
                             }
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .frame(maxWidth: .infinity,
+                           maxHeight: .infinity,
+                           alignment: .center)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .frame(maxWidth: .infinity,
+                       maxHeight: .infinity,
+                       alignment: .center)
             } else if showLevelComplete {
                 ZStack {
                     Color.black.opacity(0.8).ignoresSafeArea()
@@ -715,10 +754,7 @@ struct GameView: View {
                                 .fontWeight(.bold)
                                 .shadow(color: Color.mint, radius: 10)
                                 .foregroundColor(.white)
-
-                                .onTapGesture {
-                                    resetGame()
-                                }
+                                .onTapGesture { resetGame() }
                         }
                     }
                 }
@@ -762,7 +798,7 @@ struct GameView: View {
                     canShowEchoPointFindTipOnLevel1 = true
                     showTip()
                 }
-            } else if currentLevel == 7 && canShowFakeEchoPointTipOnLevel7 != nil {
+            } else if currentLevel == FAKE_ECHO_INTRO_LEVEL && canShowFakeEchoPointTipOnLevel7 != nil {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     canShowFakeEchoPointTipOnLevel7 = true
                     showTip()
@@ -775,18 +811,14 @@ struct GameView: View {
         if !tipIsShowing {
             tipIsShowing = true
             popupOpacity = 0.0
-            withAnimation(.easeIn(duration: 0.5)) {
-                popupOpacity = 1.0 // Fade in
-            }
+            withAnimation(.easeIn(duration: 0.5)) { popupOpacity = 1.0 }
         }
     }
     
     
     private func hideTip() {
         if tipIsShowing && canDissapearTip {
-            withAnimation(.easeOut(duration: 0.5)) {
-                popupOpacity = 0.0
-            }
+            withAnimation(.easeOut(duration: 0.5)) { popupOpacity = 0.0 }
             
             DispatchQueue.main.async {
                 tipIsShowing = false
@@ -848,7 +880,8 @@ struct GameView: View {
     }
 
     func calculateCurrentScore(_ takeWallPenalty: Bool) -> Int {
-        let extraMoves = max(0, totalMoves - movesLeft - minimumMovesRequired)
+        if playerPosition == goalPosition { return currentScore }
+        let extraMoves = max(0, totalMoves - movesLeft - minimumMovesRequired - 1)
         let penalty = max(100, (totalTargetScore - BASE_POINT) / (totalMoves - minimumMovesRequired))
         var currentScore = max(0, totalTargetScore - (extraMoves * penalty))
         if takeWallPenalty {
@@ -890,7 +923,9 @@ struct GameView: View {
             UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
         }
         
-        movesLeft = max(0, movesLeft-1)
+        if !playerHitWall {
+            movesLeft = max(0, movesLeft-1)
+        }
         
         if currentLevel == 1 {
             if movesLeft == totalMoves-1 && canShowMovesLeftTipOnLevel1 != nil {
@@ -977,10 +1012,15 @@ struct GameView: View {
         let intensity = CHHapticEventParameter(parameterID: .hapticIntensity, value: Float(intensityValue*2))
         let sharpness = CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.3)
 
-        if intensityValue >= 0.4 && currentLevel == 1 && canShowEchoPointTipOnLevel1 != nil {
+        if intensityValue >= 0.4 &&
+            currentLevel == 1 &&
+            canShowEchoPointTipOnLevel1 != nil {
             canShowEchoPointTipOnLevel1 = true
             showTip()
-        } else if intensityValue >= 0.6 && currentLevel == 7 && distance == fakeGoalDistance && canShowFakeEchoPointSpotTipOnLevel7 != nil {
+        } else if intensityValue >= 0.3 &&
+                    currentLevel == FAKE_ECHO_INTRO_LEVEL &&
+                    distance <= 2 &&
+                    canShowFakeEchoPointSpotTipOnLevel7 != nil {
             canShowFakeEchoPointSpotTipOnLevel7 = true
             showTip()
         }

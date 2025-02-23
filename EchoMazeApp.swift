@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-// All the images are used in this app is taken from DeepAI
+/// All the images are used in this app is taken from DeepAI
 
 @main
 struct EchoMazeApp: App {
